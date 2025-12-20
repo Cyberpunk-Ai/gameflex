@@ -6,12 +6,20 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import { Layout } from "@/components/layout";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+import FAQs from "./pages/FAQs";
+import Support from "./pages/Support";
+import Marketplace from "./pages/Marketplace";
+import GameRooms from "./pages/GameRooms";
+import Rewards from "./pages/Rewards";
+import MyMatches from "./pages/MyMatches";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -35,14 +43,19 @@ const App = () => (
               <Route path="/tournaments/:id" element={<TournamentDetail />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/marketplace" element={<Home />} />
-              <Route path="/support" element={<Home />} />
-              <Route path="/profile" element={<Dashboard />} />
-              <Route path="/settings" element={<Dashboard />} />
-              <Route path="/notifications" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/faqs" element={<FAQs />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/game-rooms" element={<GameRooms />} />
+              <Route path="/rewards" element={<Rewards />} />
+              <Route path="/my-matches" element={<MyMatches />} />
             </Route>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/register" element={<Auth />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="tournaments" element={<AdminTournaments />} />

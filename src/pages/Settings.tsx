@@ -8,10 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Settings as SettingsIcon, Bell, Shield, Smartphone, Globe, Trash2, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Shield, Trash2, Loader2 } from 'lucide-react';
 
 const Settings = () => {
-  const { user, profile, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');

@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Swords, Trophy, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { Swords, Trophy, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
 const statusColors: Record<string, string> = {
@@ -24,12 +24,7 @@ const MyMatches = () => {
       if (!user) return [];
       const { data } = await supabase
         .from('matches')
-        .select(`
-          *,
-          tournaments(id, title, game),
-          player1:profiles!matches_player1_id_fkey(username, avatar_url, game_handle),
-          player2:profiles!matches_player2_id_fkey(username, avatar_url, game_handle)
-        `)
+        .select('*, tournaments(id, title, game)')
         .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
         .order('scheduled_at', { ascending: false });
       return data || [];
@@ -37,8 +32,22 @@ const MyMatches = () => {
     enabled: !!user,
   });
 
-  const upcomingMatches = matches?.filter((m: any) => m.status === 'scheduled' || m.status === 'live') || [];
-  const completedMatches = matches?.filter((m: any) => m.status === 'completed' || m.status === 'cancelled') || [];
+  const { data: profiles } = useQuery({
+    queryKey: ['match-profiles'],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('user_id, username, avatar_url, game_handle');
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const getProfile = (userId: string | null) => {
+    if (!userId) return null;
+    return profiles?.find(p => p.user_id === userId);
+  };
+
+  const upcomingMatches = matches?.filter((m) => m.status === 'scheduled' || m.status === 'live') || [];
+  const completedMatches = matches?.filter((m) => m.status === 'completed' || m.status === 'cancelled') || [];
 
   if (!user) {
     return (
@@ -52,9 +61,10 @@ const MyMatches = () => {
     );
   }
 
-  const MatchCard = ({ match }: { match: any }) => {
+  const MatchCard = ({ match }: { match: typeof matches extends (infer T)[] | undefined ? T : never }) => {
+    if (!match) return null;
     const isPlayer1 = match.player1_id === user.id;
-    const opponent = isPlayer1 ? match.player2 : match.player1;
+    const opponent = isPlayer1 ? getProfile(match.player2_id) : getProfile(match.player1_id);
     const myScore = isPlayer1 ? match.player1_score : match.player2_score;
     const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
     const didWin = match.winner_id === user.id;
@@ -66,7 +76,7 @@ const MyMatches = () => {
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <div>
-              <Link to={`/tournament/${match.tournament_id}`}>
+              <Link to={`/tournaments/${match.tournament_id}`}>
                 <CardTitle className="text-lg hover:text-primary transition-colors">
                   {match.tournaments?.title}
                 </CardTitle>
@@ -155,7 +165,7 @@ const MyMatches = () => {
               </h2>
               {upcomingMatches.length > 0 ? (
                 <div className="grid gap-4">
-                  {upcomingMatches.map((match: any) => (
+                  {upcomingMatches.map((match) => (
                     <MatchCard key={match.id} match={match} />
                   ))}
                 </div>
@@ -176,7 +186,7 @@ const MyMatches = () => {
               </h2>
               {completedMatches.length > 0 ? (
                 <div className="grid gap-4">
-                  {completedMatches.map((match: any) => (
+                  {completedMatches.map((match) => (
                     <MatchCard key={match.id} match={match} />
                   ))}
                 </div>

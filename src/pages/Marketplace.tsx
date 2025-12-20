@@ -21,7 +21,7 @@ const categoryIcons: Record<string, string> = {
 };
 
 const Marketplace = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +31,7 @@ const Marketplace = () => {
   const [newListing, setNewListing] = useState({
     title: '',
     description: '',
-    category: 'other',
+    category: 'other' as 'account' | 'items' | 'coaching' | 'other',
     price: '',
   });
 
@@ -40,12 +40,24 @@ const Marketplace = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('marketplace_listings')
-        .select('*, profiles!marketplace_listings_seller_id_fkey(username, avatar_url)')
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       return data || [];
     },
   });
+
+  const { data: sellers } = useQuery({
+    queryKey: ['sellers'],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('user_id, username, avatar_url');
+      return data || [];
+    },
+  });
+
+  const getSellerInfo = (sellerId: string) => {
+    return sellers?.find(s => s.user_id === sellerId);
+  };
 
   const createListingMutation = useMutation({
     mutationFn: async () => {
@@ -71,7 +83,7 @@ const Marketplace = () => {
         description: 'Your item is now listed on the marketplace.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message,
@@ -80,7 +92,7 @@ const Marketplace = () => {
     },
   });
 
-  const filteredListings = listings?.filter((listing: any) => {
+  const filteredListings = listings?.filter((listing) => {
     const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || listing.category === categoryFilter;
@@ -126,7 +138,7 @@ const Marketplace = () => {
                     <Label htmlFor="category">Category</Label>
                     <Select
                       value={newListing.category}
-                      onValueChange={(value) => setNewListing({ ...newListing, category: value })}
+                      onValueChange={(value: 'account' | 'items' | 'coaching' | 'other') => setNewListing({ ...newListing, category: value })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -219,40 +231,43 @@ const Marketplace = () => {
           </div>
         ) : filteredListings && filteredListings.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredListings.map((listing: any) => (
-              <Card key={listing.id} className="border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-colors">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{listing.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-2 mt-1">
-                        <User className="w-3 h-3" />
-                        {listing.profiles?.username || 'Unknown Seller'}
-                      </CardDescription>
+            {filteredListings.map((listing) => {
+              const seller = getSellerInfo(listing.seller_id);
+              return (
+                <Card key={listing.id} className="border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-colors">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{listing.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <User className="w-3 h-3" />
+                          {seller?.username || 'Unknown Seller'}
+                        </CardDescription>
+                      </div>
+                      <span className="text-2xl">{categoryIcons[listing.category]}</span>
                     </div>
-                    <span className="text-2xl">{categoryIcons[listing.category]}</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {listing.description || 'No description provided'}
-                  </p>
-                  <div className="flex items-center gap-2 mt-4">
-                    <Badge variant="outline">{listing.category}</Badge>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <Tag className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-primary">KES {listing.price}</span>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Contact
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {listing.description || 'No description provided'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-4">
+                      <Badge variant="outline">{listing.category}</Badge>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <Tag className="w-4 h-4 text-primary" />
+                      <span className="font-bold text-primary">KES {listing.price}</span>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Contact
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">

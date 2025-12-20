@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +9,28 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { User, Phone, Mail, Gamepad2, Wallet, Trophy, Target, Award, Loader2, Camera } from 'lucide-react';
+import { User, Phone, Mail, Gamepad2, Wallet, Trophy, Target, Loader2, Camera } from 'lucide-react';
 
 const Profile = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    username: profile?.username || '',
-    phone: profile?.phone || '',
-    game_handle: profile?.game_handle || '',
+    username: '',
+    phone: '',
+    game_handle: '',
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        username: profile.username || '',
+        phone: profile.phone || '',
+        game_handle: profile.game_handle || '',
+      });
+    }
+  }, [profile]);
 
   const { data: stats } = useQuery({
     queryKey: ['leaderboard-stats', user?.id],
@@ -96,6 +106,7 @@ const Profile = () => {
       .getPublicUrl(filePath);
 
     await updateProfile({ avatar_url: publicUrl });
+    await refreshProfile();
     toast({
       title: 'Avatar Updated',
       description: 'Your avatar has been changed.',
@@ -123,7 +134,7 @@ const Profile = () => {
               <div className="flex items-center gap-6">
                 <div className="relative group">
                   <Avatar className="w-24 h-24 border-4 border-primary/30">
-                    <AvatarImage src={profile.avatar_url} />
+                    <AvatarImage src={profile.avatar_url || undefined} />
                     <AvatarFallback className="text-2xl bg-primary/20">
                       {profile.username?.charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -286,12 +297,12 @@ const Profile = () => {
           <CardContent>
             {registrations && registrations.length > 0 ? (
               <div className="space-y-3">
-                {registrations.map((reg: any) => (
+                {registrations.map((reg) => (
                   <div key={reg.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                     <div>
                       <p className="font-medium">{reg.tournaments?.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(reg.tournaments?.start_date).toLocaleDateString()}
+                        {reg.tournaments?.start_date && new Date(reg.tournaments.start_date).toLocaleDateString()}
                       </p>
                     </div>
                     <Badge variant={reg.status === 'confirmed' ? 'default' : 'secondary'}>
