@@ -32,13 +32,20 @@ const Support = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [selectedTicket, setSelectedTicket] = useState<{
+    id: string;
+    subject: string;
+    description: string;
+    status: string;
+    priority: string;
+    created_at: string;
+  } | null>(null);
   const [newMessage, setNewMessage] = useState('');
   
   const [newTicket, setNewTicket] = useState({
     subject: '',
     description: '',
-    priority: 'medium',
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
   });
 
   const { data: tickets, isLoading } = useQuery({
@@ -95,7 +102,7 @@ const Support = () => {
         description: 'Our support team will respond soon.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message,
@@ -122,7 +129,7 @@ const Support = () => {
       queryClient.invalidateQueries({ queryKey: ['ticket-messages'] });
       setNewMessage('');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message,
@@ -174,7 +181,7 @@ const Support = () => {
                   </div>
                 ) : tickets && tickets.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {tickets.map((ticket: any) => (
+                    {tickets.map((ticket) => (
                       <button
                         key={ticket.id}
                         onClick={() => setSelectedTicket(ticket)}
@@ -231,7 +238,7 @@ const Support = () => {
                     <Label htmlFor="priority">Priority</Label>
                     <Select
                       value={newTicket.priority}
-                      onValueChange={(value) => setNewTicket({ ...newTicket, priority: value })}
+                      onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setNewTicket({ ...newTicket, priority: value })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -301,7 +308,7 @@ const Support = () => {
                   
                   {/* Messages */}
                   <div className="space-y-4 mb-4 max-h-64 overflow-y-auto">
-                    {messages?.map((msg: any) => (
+                    {messages?.map((msg) => (
                       <div
                         key={msg.id}
                         className={`p-3 rounded-lg ${

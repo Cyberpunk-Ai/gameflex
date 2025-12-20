@@ -1,127 +1,143 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+type Profile = Tables<'profiles'>;
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
+  profile: Profile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (phone: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
-  updateUser: (data: Partial<User>) => void;
-}
-
-interface RegisterData {
-  phone: string;
-  username: string;
-  password: string;
-  email?: string;
-  gameHandle?: string;
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<{ error: Error | null }>;
+  register: (email: string, password: string, username: string) => Promise<{ error: Error | null }>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    phone: '0712345678',
-    username: 'ProGamer254',
-    email: 'progamer@example.com',
-    gameHandle: 'ProGamer#1234',
-    walletBalance: 5000,
-    role: 'user',
-    isVerified: true,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'admin',
-    phone: '0700000000',
-    username: 'Admin',
-    email: 'admin@gameflex.com',
-    walletBalance: 0,
-    role: 'admin',
-    isVerified: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date(),
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    setProfile(data);
+    return data;
+  };
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
+  };
 
   useEffect(() => {
-    // Check for stored session
-    const storedUser = localStorage.getItem('gameflex_user');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUser({
-          ...parsed,
-          createdAt: new Date(parsed.createdAt),
-          updatedAt: new Date(parsed.updatedAt),
-        });
-      } catch (error) {
-        localStorage.removeItem('gameflex_user');
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        // Defer profile fetch with setTimeout to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+            checkAdminRole(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setIsAdmin(false);
+        }
       }
-    }
-    setIsLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id);
+        checkAdminRole(session.user.id);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (phone: string, password: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     
-    // Find user by phone (demo: password is "password" for all users)
-    const foundUser = mockUsers.find(u => u.phone === phone);
-    
-    if (!foundUser || password !== 'password') {
-      throw new Error('Invalid phone number or password');
-    }
-    
-    setUser(foundUser);
-    localStorage.setItem('gameflex_user', JSON.stringify(foundUser));
+    return { error: error ? new Error(error.message) : null };
   };
 
-  const register = async (data: RegisterData) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  const register = async (email: string, password: string, username: string) => {
+    const redirectUrl = `${window.location.origin}/`;
     
-    // Check if phone already exists
-    if (mockUsers.some(u => u.phone === data.phone)) {
-      throw new Error('Phone number already registered');
-    }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          username,
+        },
+      },
+    });
     
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      phone: data.phone,
-      username: data.username,
-      email: data.email,
-      gameHandle: data.gameHandle,
-      walletBalance: 0,
-      role: 'user',
-      isVerified: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    mockUsers.push(newUser);
-    setUser(newUser);
-    localStorage.setItem('gameflex_user', JSON.stringify(newUser));
+    return { error: error ? new Error(error.message) : null };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('gameflex_user');
+    setSession(null);
+    setProfile(null);
+    setIsAdmin(false);
   };
 
-  const updateUser = (data: Partial<User>) => {
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!user) return { error: new Error('Not authenticated') };
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update(data)
+      .eq('user_id', user.id);
+    
+    if (!error) {
+      await fetchProfile(user.id);
+    }
+    
+    return { error: error ? new Error(error.message) : null };
+  };
+
+  const refreshProfile = async () => {
     if (user) {
-      const updated = { ...user, ...data, updatedAt: new Date() };
-      setUser(updated);
-      localStorage.setItem('gameflex_user', JSON.stringify(updated));
+      await fetchProfile(user.id);
     }
   };
 
@@ -129,12 +145,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        session,
+        profile,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin,
         login,
         register,
         logout,
-        updateUser,
+        updateProfile,
+        refreshProfile,
       }}
     >
       {children}
