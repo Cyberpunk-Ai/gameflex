@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Store, Plus, Search, User, Tag, ShoppingCart, Loader2 } from 'lucide-react';
+import { Store, Plus, Search, User, Tag, ShoppingCart, Loader2, Upload } from 'lucide-react';
 
 const categoryIcons: Record<string, string> = {
   account: '👤',
@@ -27,6 +27,7 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isCreating, setIsCreating] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   
   const [newListing, setNewListing] = useState({
     title: '',
@@ -59,9 +60,31 @@ const Marketplace = () => {
     return sellers?.find(s => s.user_id === sellerId);
   };
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `marketplace/${crypto.randomUUID()}.${fileExt}`;
+    const { error } = await supabase.storage
+      .from('tournament-images')
+      .upload(fileName, file);
+    
+    if (error) throw error;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('tournament-images')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
+  };
+
   const createListingMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
+      
+      let imageUrl = null;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
       const { error } = await supabase
         .from('marketplace_listings')
         .insert({
@@ -70,6 +93,7 @@ const Marketplace = () => {
           description: newListing.description,
           category: newListing.category,
           price: parseFloat(newListing.price),
+          image_url: imageUrl,
         });
       
       if (error) throw error;
@@ -78,6 +102,7 @@ const Marketplace = () => {
       queryClient.invalidateQueries({ queryKey: ['marketplace-listings'] });
       setIsCreating(false);
       setNewListing({ title: '', description: '', category: 'other', price: '' });
+      setImageFile(null);
       toast({
         title: 'Listing Created',
         description: 'Your item is now listed on the marketplace.',
@@ -132,6 +157,27 @@ const Marketplace = () => {
                       onChange={(e) => setNewListing({ ...newListing, title: e.target.value })}
                       placeholder="What are you selling?"
                     />
+                  </div>
+                  
+                  {/* Image Upload */}
+                  <div className="space-y-2">
+                    <Label htmlFor="listing-image">Image</Label>
+                    <div className="flex items-center gap-4">
+                      <Input 
+                        id="listing-image" 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {imageFile && (
+                        <img 
+                          src={URL.createObjectURL(imageFile)} 
+                          alt="Preview" 
+                          className="h-12 w-12 object-cover rounded"
+                        />
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -231,10 +277,19 @@ const Marketplace = () => {
           </div>
         ) : filteredListings && filteredListings.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredListings.map((listing) => {
+            {filteredListings.map((listing: any) => {
               const seller = getSellerInfo(listing.seller_id);
               return (
-                <Card key={listing.id} className="border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-colors">
+                <Card key={listing.id} className="border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-colors overflow-hidden">
+                  {listing.image_url && (
+                    <div className="h-40 overflow-hidden">
+                      <img 
+                        src={listing.image_url} 
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
@@ -258,7 +313,7 @@ const Marketplace = () => {
                   <CardFooter className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <Tag className="w-4 h-4 text-primary" />
-                      <span className="font-bold text-primary">KES {listing.price}</span>
+                      <span className="font-bold text-primary">KES {Number(listing.price).toLocaleString()}</span>
                     </div>
                     <Button size="sm" variant="outline">
                       <ShoppingCart className="w-4 h-4 mr-2" />

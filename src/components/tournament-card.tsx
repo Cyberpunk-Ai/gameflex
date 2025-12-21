@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Trophy, Clock, Gamepad2 } from 'lucide-react';
+import { Calendar, Users, Trophy, Gamepad2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tournament, TournamentStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface TournamentCardProps {
-  tournament: Tournament;
+  tournament: {
+    id: string;
+    title: string;
+    game: string;
+    format: string;
+    status: string;
+    entry_fee: number;
+    prize_pool: number;
+    max_participants: number;
+    current_participants: number;
+    start_date: string;
+    image_url?: string;
+  };
   compact?: boolean;
 }
 
@@ -30,16 +41,16 @@ const gameColors: Record<string, string> = {
   other: 'from-blue-500/20 to-blue-900/20 border-blue-500/30',
 };
 
-const statusBadgeVariant: Record<TournamentStatus, "live" | "upcoming" | "completed" | "pending" | "registration"> = {
-  live: 'live',
-  upcoming: 'upcoming',
-  registration_open: 'registration',
-  registration_closed: 'pending',
-  completed: 'completed',
-  cancelled: 'pending',
+const statusBadgeVariant: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
+  live: 'destructive',
+  upcoming: 'secondary',
+  registration_open: 'default',
+  registration_closed: 'secondary',
+  completed: 'outline',
+  cancelled: 'outline',
 };
 
-const statusLabels: Record<TournamentStatus, string> = {
+const statusLabels: Record<string, string> = {
   live: 'LIVE',
   upcoming: 'Upcoming',
   registration_open: 'Registration Open',
@@ -49,7 +60,7 @@ const statusLabels: Record<TournamentStatus, string> = {
 };
 
 export function TournamentCard({ tournament, compact = false }: TournamentCardProps) {
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('en-KE', {
       month: 'short',
       day: 'numeric',
@@ -58,7 +69,7 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
     }).format(new Date(date));
   };
 
-  const spotsLeft = tournament.maxParticipants - tournament.currentParticipants;
+  const spotsLeft = tournament.max_participants - (tournament.current_participants ?? 0);
   const isFull = spotsLeft <= 0;
 
   if (compact) {
@@ -67,19 +78,19 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
         to={`/tournaments/${tournament.id}`}
         className={cn(
           "block p-4 rounded-xl border bg-gradient-to-br transition-all hover:scale-[1.02] hover:shadow-lg",
-          gameColors[tournament.game]
+          gameColors[tournament.game] || gameColors.other
         )}
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{gameIcons[tournament.game]}</span>
+          <span className="text-2xl">{gameIcons[tournament.game] || gameIcons.other}</span>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold truncate">{tournament.title}</h3>
             <p className="text-sm text-muted-foreground">
-              KES {tournament.prizePool.toLocaleString()} Prize
+              KES {Number(tournament.prize_pool).toLocaleString()} Prize
             </p>
           </div>
-          <Badge variant={statusBadgeVariant[tournament.status]}>
-            {statusLabels[tournament.status]}
+          <Badge variant={statusBadgeVariant[tournament.status] || 'secondary'}>
+            {statusLabels[tournament.status] || tournament.status}
           </Badge>
         </div>
       </Link>
@@ -90,33 +101,46 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
     <div
       className={cn(
         "group relative rounded-2xl border bg-gradient-to-br overflow-hidden transition-all hover:shadow-xl hover:shadow-primary/10",
-        gameColors[tournament.game]
+        gameColors[tournament.game] || gameColors.other
       )}
     >
+      {/* Tournament Image */}
+      {tournament.image_url && (
+        <div className="h-32 overflow-hidden">
+          <img 
+            src={tournament.image_url} 
+            alt={tournament.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Status Badge */}
       <div className="absolute top-4 right-4 z-10">
-        <Badge variant={statusBadgeVariant[tournament.status]} className="font-display">
+        <Badge variant={statusBadgeVariant[tournament.status] || 'secondary'} className="font-display">
           {tournament.status === 'live' && (
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-1.5" />
           )}
-          {statusLabels[tournament.status]}
+          {statusLabels[tournament.status] || tournament.status}
         </Badge>
       </div>
 
       {/* Game Icon Background */}
-      <div className="absolute -top-10 -right-10 text-[120px] opacity-10 pointer-events-none">
-        {gameIcons[tournament.game]}
-      </div>
+      {!tournament.image_url && (
+        <div className="absolute -top-10 -right-10 text-[120px] opacity-10 pointer-events-none">
+          {gameIcons[tournament.game] || gameIcons.other}
+        </div>
+      )}
 
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start gap-4 mb-4">
           <div className="h-14 w-14 rounded-xl bg-background/50 flex items-center justify-center text-3xl">
-            {gameIcons[tournament.game]}
+            {gameIcons[tournament.game] || gameIcons.other}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-display text-lg font-bold truncate">{tournament.title}</h3>
-            <p className="text-sm text-muted-foreground capitalize">{tournament.game} • {tournament.format.replace('_', ' ')}</p>
+            <p className="text-sm text-muted-foreground capitalize">{tournament.game} • {(tournament.format || '').replace('_', ' ')}</p>
           </div>
         </div>
 
@@ -124,19 +148,19 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="flex items-center gap-2 text-sm">
             <Trophy className="h-4 w-4 text-primary" />
-            <span className="font-semibold">KES {tournament.prizePool.toLocaleString()}</span>
+            <span className="font-semibold">KES {Number(tournament.prize_pool).toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span>{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+            <span>{tournament.current_participants ?? 0}/{tournament.max_participants}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>{formatDate(tournament.startDate)}</span>
+            <span>{formatDate(tournament.start_date)}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Gamepad2 className="h-4 w-4 text-muted-foreground" />
-            <span>KES {tournament.entryFee}</span>
+            <span>KES {Number(tournament.entry_fee).toLocaleString()}</span>
           </div>
         </div>
 
@@ -154,14 +178,14 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
                 "h-full rounded-full transition-all",
                 isFull ? "bg-destructive" : "bg-primary"
               )}
-              style={{ width: `${(tournament.currentParticipants / tournament.maxParticipants) * 100}%` }}
+              style={{ width: `${((tournament.current_participants ?? 0) / tournament.max_participants) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Action */}
         <Button
-          variant={tournament.status === 'registration_open' ? 'neon' : 'outline'}
+          variant={tournament.status === 'registration_open' ? 'default' : 'outline'}
           className="w-full"
           asChild
           disabled={tournament.status === 'completed' || tournament.status === 'cancelled'}

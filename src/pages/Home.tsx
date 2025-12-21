@@ -3,7 +3,8 @@ import { Trophy, Users, Zap, Shield, ArrowRight, Star, Gamepad2, DollarSign } fr
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TournamentCard } from '@/components/tournament-card';
-import { mockTournaments, mockLeaderboard } from '@/lib/mock-data';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const features = [
   { icon: Trophy, title: 'Win Big Prizes', description: 'Compete for cash prizes up to KES 100,000+' },
@@ -22,9 +23,34 @@ const games = [
 ];
 
 export default function Home() {
-  const liveTournaments = mockTournaments.filter(t => t.status === 'live');
-  const upcomingTournaments = mockTournaments.filter(t => t.status === 'registration_open' || t.status === 'upcoming').slice(0, 3);
-  const topPlayers = mockLeaderboard.slice(0, 5);
+  const { data: tournaments = [] } = useQuery({
+    queryKey: ['home-tournaments'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('tournaments')
+        .select('*')
+        .in('status', ['live', 'registration_open', 'upcoming'])
+        .order('start_date', { ascending: true })
+        .limit(6);
+      return data ?? [];
+    }
+  });
+
+  const { data: leaderboard = [] } = useQuery({
+    queryKey: ['home-leaderboard'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('leaderboard_stats')
+        .select('*, profiles(username, avatar_url)')
+        .order('points', { ascending: false })
+        .limit(5);
+      return data ?? [];
+    }
+  });
+
+  const liveTournaments = tournaments.filter((t: any) => t.status === 'live');
+  const upcomingTournaments = tournaments.filter((t: any) => t.status === 'registration_open' || t.status === 'upcoming').slice(0, 3);
+  const topPlayers = leaderboard.slice(0, 5);
 
   return (
     <div className="min-h-screen">
@@ -146,23 +172,23 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid gap-3">
-            {topPlayers.map((player, index) => (
-              <div key={player.userId} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50">
+            {topPlayers.map((player: any, index: number) => (
+              <div key={player.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50">
                 <div className={`h-10 w-10 rounded-full flex items-center justify-center font-display font-bold ${
                   index === 0 ? 'bg-yellow-500/20 text-yellow-500' :
                   index === 1 ? 'bg-gray-400/20 text-gray-400' :
                   index === 2 ? 'bg-orange-500/20 text-orange-500' :
                   'bg-secondary text-muted-foreground'
                 }`}>
-                  {player.rank}
+                  {index + 1}
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold">{player.username}</div>
-                  <div className="text-sm text-muted-foreground">{player.gameHandle}</div>
+                  <div className="font-semibold">{player.profiles?.username ?? 'Unknown'}</div>
+                  <div className="text-sm text-muted-foreground">{player.profiles?.game_handle ?? '-'}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display font-bold text-primary">{player.points.toLocaleString()} pts</div>
-                  <div className="text-sm text-muted-foreground">{player.wins}W - {player.losses}L</div>
+                  <div className="font-display font-bold text-primary">{(player.points ?? 0).toLocaleString()} pts</div>
+                  <div className="text-sm text-muted-foreground">{player.wins ?? 0}W - {player.losses ?? 0}L</div>
                 </div>
               </div>
             ))}
