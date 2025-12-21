@@ -40,7 +40,10 @@ export default function Register() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await register({ phone: data.phone, username: data.username, password: data.password, email: data.email, gameHandle: data.gameHandle });
+      // Use email for auth, or generate from phone if not provided
+      const email = data.email || `${data.phone}@gameflex.app`;
+      const { error } = await register(email, data.password, data.username);
+      if (error) throw error;
       toast({ title: 'Welcome to GameFlex!', description: 'Your account has been created' });
       navigate('/');
     } catch (error) {

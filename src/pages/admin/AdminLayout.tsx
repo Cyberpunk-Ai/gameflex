@@ -11,10 +11,14 @@ const adminNav = [
 ];
 
 export default function AdminLayout() {
-  const { user } = useAuth();
+  const { isAdmin, isLoading } = useAuth();
   const location = useLocation();
 
-  if (!user || user.role !== 'admin') {
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+  }
+
+  if (!isAdmin) {
     return <div className="container mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl mb-4">Access Denied</h1><p className="text-muted-foreground mb-4">You need admin privileges to access this page.</p><Link to="/" className="text-primary hover:underline">Go Home</Link></div>;
   }
 
