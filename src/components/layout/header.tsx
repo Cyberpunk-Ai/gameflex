@@ -36,7 +36,7 @@ const navigation = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, isAdmin, logout } = useAuth();
   const location = useLocation();
 
   const isActive = (href: string) => {
@@ -93,7 +93,7 @@ export function Header() {
               <Button variant="outline" size="sm" className="gap-2" asChild>
                 <Link to="/dashboard">
                   <Wallet className="h-4 w-4" />
-                  <span className="font-semibold">KES {user.walletBalance.toLocaleString()}</span>
+                  <span className="font-semibold">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</span>
                 </Link>
               </Button>
 
@@ -102,19 +102,19 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 pl-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatarUrl} />
+                      <AvatarImage src={profile?.avatar_url ?? ''} />
                       <AvatarFallback className="bg-primary/20 text-primary text-sm">
-                        {user.username.slice(0, 2).toUpperCase()}
+                        {(profile?.username ?? 'U').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{user.username}</span>
+                    <span className="font-medium">{profile?.username ?? 'User'}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user.username}</p>
-                      <p className="text-xs text-muted-foreground">{user.phone}</p>
+                      <p className="text-sm font-medium">{profile?.username ?? 'User'}</p>
+                      <p className="text-xs text-muted-foreground">{profile?.email ?? user?.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -136,7 +136,7 @@ export function Header() {
                       Settings
                     </Link>
                   </DropdownMenuItem>
-                  {user.role === 'admin' && (
+                  {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -202,14 +202,14 @@ export function Header() {
                 <>
                   <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary/50">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatarUrl} />
+                      <AvatarImage src={profile?.avatar_url ?? ''} />
                       <AvatarFallback className="bg-primary/20 text-primary">
-                        {user.username.slice(0, 2).toUpperCase()}
+                        {(profile?.username ?? 'U').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-muted-foreground">KES {user.walletBalance.toLocaleString()}</p>
+                      <p className="font-medium">{profile?.username ?? 'User'}</p>
+                      <p className="text-sm text-muted-foreground">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</p>
                     </div>
                   </div>
                   <Link
@@ -219,7 +219,7 @@ export function Header() {
                   >
                     Dashboard
                   </Link>
-                  {user.role === 'admin' && (
+                  {isAdmin && (
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
