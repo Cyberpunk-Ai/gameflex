@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Users, Trophy, Clock, Gamepad2, ArrowLeft, Shield, Info, User } from 'lucide-react';
+import { Calendar, Users, Trophy, Gamepad2, ArrowLeft, User, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentModal } from '@/components/payment-modal';
-import { mockTournaments, mockMatches } from '@/lib/mock-data';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
-const statusLabels: Record<string, string> = { live: 'LIVE', upcoming: 'Upcoming', registration_open: 'Registration Open', registration_closed: 'Registration Closed', completed: 'Completed', cancelled: 'Cancelled' };
+const statusLabels: Record<string, string> = { 
+  live: 'LIVE', 
+  upcoming: 'Upcoming', 
+  registration_open: 'Registration Open', 
+  registration_closed: 'Registration Closed', 
+  completed: 'Completed', 
+  cancelled: 'Cancelled' 
+};
 
 export default function TournamentDetail() {
   const { id } = useParams();
@@ -17,45 +25,179 @@ export default function TournamentDetail() {
   const { toast } = useToast();
   const [showPayment, setShowPayment] = useState(false);
 
-  const tournament = mockTournaments.find(t => t.id === id);
-  if (!tournament) return <div className="container mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl">Tournament not found</h1><Link to="/tournaments" className="text-primary hover:underline mt-4 inline-block">Back to tournaments</Link></div>;
+  const { data: tournament, isLoading } = useQuery({
+    queryKey: ['tournament', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tournaments')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
-  const matches = mockMatches.filter(m => m.tournamentId === id);
-  const formatDate = (date: Date) => new Intl.DateTimeFormat('en-KE', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date));
+  const { data: matches } = useQuery({
+    queryKey: ['matches', id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('matches')
+        .select('*')
+        .eq('tournament_id', id)
+        .order('round', { ascending: true })
+        .order('match_number', { ascending: true });
+      return data || [];
+    },
+    enabled: !!id,
+  });
+
+  const { data: registrations } = useQuery({
+    queryKey: ['registrations', id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('registrations')
+        .select('*, profiles(username, avatar_url)')
+        .eq('tournament_id', id)
+        .eq('status', 'confirmed');
+      return data || [];
+    },
+    enabled: !!id,
+  });
+
+  const { data: userRegistration } = useQuery({
+    queryKey: ['user-registration', id, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('tournament_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+        <p className="text-muted-foreground mt-4">Loading tournament...</p>
+      </div>
+    );
+  }
+
+  if (!tournament) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <h1 className="font-display text-2xl">Tournament not found</h1>
+        <Link to="/tournaments" className="text-primary hover:underline mt-4 inline-block">
+          Back to tournaments
+        </Link>
+      </div>
+    );
+  }
+
+  const formatDate = (date: string) => 
+    new Intl.DateTimeFormat('en-KE', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }).format(new Date(date));
 
   const handleRegister = () => {
-    if (!isAuthenticated) { toast({ title: 'Login Required', description: 'Please login to register for tournaments', variant: 'destructive' }); return; }
+    if (!isAuthenticated) { 
+      toast({ 
+        title: 'Login Required', 
+        description: 'Please login to register for tournaments', 
+        variant: 'destructive' 
+      }); 
+      return; 
+    }
+    if (userRegistration) {
+      toast({ 
+        title: 'Already Registered', 
+        description: `Your registration status: ${userRegistration.status}`, 
+      }); 
+      return;
+    }
     setShowPayment(true);
   };
 
+  const isRegistered = !!userRegistration;
+  const prizePool = Number(tournament.prize_pool);
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link to="/tournaments" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"><ArrowLeft className="h-4 w-4" />Back to Tournaments</Link>
+      <Link to="/tournaments" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="h-4 w-4" />Back to Tournaments
+      </Link>
 
       {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 p-8 mb-8">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 p-8 mb-8 relative overflow-hidden">
+        {tournament.image_url && (
+          <div className="absolute inset-0 opacity-20">
+            <img src={tournament.image_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="relative flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
-            <Badge variant={tournament.status === 'live' ? 'live' : tournament.status === 'registration_open' ? 'registration' : 'upcoming'} className="mb-4">{statusLabels[tournament.status]}</Badge>
+            <Badge variant={tournament.status === 'live' ? 'destructive' : tournament.status === 'registration_open' ? 'default' : 'secondary'} className="mb-4">
+              {statusLabels[tournament.status]}
+            </Badge>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">{tournament.title}</h1>
             <p className="text-muted-foreground mb-4">{tournament.description}</p>
             <div className="flex flex-wrap gap-4 text-sm">
-              <span className="flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" />{formatDate(tournament.startDate)}</span>
-              <span className="flex items-center gap-2"><Users className="h-4 w-4 text-primary" />{tournament.currentParticipants}/{tournament.maxParticipants} players</span>
-              <span className="flex items-center gap-2"><Gamepad2 className="h-4 w-4 text-primary" />{tournament.game.toUpperCase()}</span>
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />{formatDate(tournament.start_date)}
+              </span>
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />{tournament.current_participants}/{tournament.max_participants} players
+              </span>
+              <span className="flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-primary" />{tournament.game.toUpperCase()}
+              </span>
             </div>
           </div>
           <div className="text-center md:text-right">
-            <div className="font-display text-4xl font-bold text-primary mb-1">KES {tournament.prizePool.toLocaleString()}</div>
+            <div className="font-display text-4xl font-bold text-primary mb-1">KES {prizePool.toLocaleString()}</div>
             <div className="text-muted-foreground mb-4">Prize Pool</div>
-            {tournament.status === 'registration_open' && <Button size="lg" variant="gaming" onClick={handleRegister}>Register • KES {tournament.entryFee}</Button>}
+            {tournament.status === 'registration_open' && !isRegistered && (
+              <Button size="lg" onClick={handleRegister}>
+                Register • KES {Number(tournament.entry_fee).toLocaleString()}
+              </Button>
+            )}
+            {isRegistered && (
+              <div className="space-y-2">
+                <Badge variant="outline" className="text-green-500 border-green-500">
+                  {userRegistration?.status === 'confirmed' ? '✓ Registered' : `Status: ${userRegistration?.status}`}
+                </Badge>
+                {tournament.group_link && userRegistration?.status === 'confirmed' && (
+                  <a href={tournament.group_link} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="mt-2">
+                      <ExternalLink className="w-4 h-4 mr-2" />Join Group
+                    </Button>
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="brackets">Brackets</TabsTrigger><TabsTrigger value="participants">Participants</TabsTrigger><TabsTrigger value="rules">Rules</TabsTrigger></TabsList>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="brackets">Brackets</TabsTrigger>
+          <TabsTrigger value="participants">Participants</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="overview">
           <div className="grid md:grid-cols-3 gap-6">
@@ -64,18 +206,18 @@ export default function TournamentDetail() {
                 <h3 className="font-display font-bold mb-4">Tournament Info</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><span className="text-muted-foreground">Format:</span> <span className="font-medium capitalize">{tournament.format.replace('_', ' ')}</span></div>
-                  <div><span className="text-muted-foreground">Entry Fee:</span> <span className="font-medium">KES {tournament.entryFee}</span></div>
+                  <div><span className="text-muted-foreground">Entry Fee:</span> <span className="font-medium">KES {Number(tournament.entry_fee).toLocaleString()}</span></div>
                   <div><span className="text-muted-foreground">Game:</span> <span className="font-medium uppercase">{tournament.game}</span></div>
-                  <div><span className="text-muted-foreground">Registration Deadline:</span> <span className="font-medium">{formatDate(tournament.registrationDeadline)}</span></div>
+                  <div><span className="text-muted-foreground">Registration Deadline:</span> <span className="font-medium">{formatDate(tournament.registration_deadline)}</span></div>
                 </div>
               </div>
             </div>
             <div className="rounded-xl bg-card border border-border/50 p-6">
               <h3 className="font-display font-bold mb-4">Prize Distribution</h3>
               <div className="space-y-3">
-                <div className="flex justify-between"><span className="text-yellow-500">🥇 1st Place</span><span className="font-bold">KES {Math.round(tournament.prizePool * 0.5).toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">🥈 2nd Place</span><span className="font-bold">KES {Math.round(tournament.prizePool * 0.3).toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-orange-500">🥉 3rd Place</span><span className="font-bold">KES {Math.round(tournament.prizePool * 0.2).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-yellow-500">🥇 1st Place</span><span className="font-bold">KES {Math.round(prizePool * 0.5).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">🥈 2nd Place</span><span className="font-bold">KES {Math.round(prizePool * 0.3).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-orange-500">🥉 3rd Place</span><span className="font-bold">KES {Math.round(prizePool * 0.2).toLocaleString()}</span></div>
               </div>
             </div>
           </div>
@@ -84,49 +226,82 @@ export default function TournamentDetail() {
         <TabsContent value="brackets">
           <div className="rounded-xl bg-card border border-border/50 p-6">
             <h3 className="font-display font-bold mb-6">Tournament Bracket</h3>
-            {matches.length > 0 ? (
+            {matches && matches.length > 0 ? (
               <div className="space-y-4">
-                {matches.map(match => (
+                {matches.map((match: any) => (
                   <div key={match.id} className="p-4 rounded-lg bg-secondary/50 border border-border/50">
                     <div className="flex items-center justify-between">
-                      <div>Round {match.round} • Match {match.matchNumber}</div>
-                      <Badge variant={match.status === 'live' ? 'live' : match.status === 'completed' ? 'completed' : 'upcoming'}>{match.status}</Badge>
+                      <div>Round {match.round} • Match {match.match_number}</div>
+                      <Badge variant={match.status === 'live' ? 'destructive' : match.status === 'completed' ? 'secondary' : 'outline'}>
+                        {match.status}
+                      </Badge>
                     </div>
                     <div className="mt-3 flex items-center gap-4">
-                      <div className="flex-1 p-2 rounded bg-background">Player {match.player1Id || 'TBD'} {match.player1Score !== undefined && <span className="float-right font-bold">{match.player1Score}</span>}</div>
+                      <div className="flex-1 p-2 rounded bg-background">
+                        Player {match.player1_id ? match.player1_id.slice(0, 8) : 'TBD'} 
+                        {match.player1_score !== null && <span className="float-right font-bold">{match.player1_score}</span>}
+                      </div>
                       <span className="text-muted-foreground">vs</span>
-                      <div className="flex-1 p-2 rounded bg-background">Player {match.player2Id || 'TBD'} {match.player2Score !== undefined && <span className="float-right font-bold">{match.player2Score}</span>}</div>
+                      <div className="flex-1 p-2 rounded bg-background">
+                        Player {match.player2_id ? match.player2_id.slice(0, 8) : 'TBD'} 
+                        {match.player2_score !== null && <span className="float-right font-bold">{match.player2_score}</span>}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-muted-foreground text-center py-8">Brackets will be generated when the tournament starts</p>}
+            ) : (
+              <p className="text-muted-foreground text-center py-8">Brackets will be generated when the tournament starts</p>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="participants">
           <div className="rounded-xl bg-card border border-border/50 p-6">
-            <h3 className="font-display font-bold mb-4">{tournament.currentParticipants} Registered Players</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Array.from({ length: tournament.currentParticipants }, (_, i) => (
-                <div key={i} className="p-3 rounded-lg bg-secondary/50 flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center"><User className="h-4 w-4 text-primary" /></div>
-                  <span className="text-sm truncate">Player{i + 1}</span>
-                </div>
-              ))}
-            </div>
+            <h3 className="font-display font-bold mb-4">{registrations?.length || 0} Registered Players</h3>
+            {registrations && registrations.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {registrations.map((reg: any) => (
+                  <div key={reg.id} className="p-3 rounded-lg bg-secondary/50 flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                      {reg.profiles?.avatar_url ? (
+                        <img src={reg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm truncate block">{reg.profiles?.username || 'Player'}</span>
+                      <span className="text-xs text-muted-foreground truncate block">{reg.game_handle}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No registered players yet</p>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="rules">
           <div className="rounded-xl bg-card border border-border/50 p-6">
             <h3 className="font-display font-bold mb-4">Tournament Rules</h3>
-            <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{tournament.rules}</pre>
+            <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{tournament.rules || 'No rules specified.'}</pre>
           </div>
         </TabsContent>
       </Tabs>
 
-      <PaymentModal tournament={tournament} isOpen={showPayment} onClose={() => setShowPayment(false)} onSuccess={() => toast({ title: 'Registration submitted!', description: 'Awaiting payment verification' })} />
+      <PaymentModal 
+        tournament={{
+          id: tournament.id,
+          title: tournament.title,
+          entryFee: Number(tournament.entry_fee),
+          groupLink: tournament.group_link,
+        }} 
+        isOpen={showPayment} 
+        onClose={() => setShowPayment(false)} 
+        onSuccess={() => toast({ title: 'Registration submitted!', description: 'Awaiting payment verification' })} 
+      />
     </div>
   );
 }

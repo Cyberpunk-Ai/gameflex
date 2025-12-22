@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Phone, Copy, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { Phone, Copy, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,10 +11,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth-context';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PaymentModalProps {
-  tournament: Tournament;
+  tournament: {
+    id: string;
+    title: string;
+    entryFee: number;
+    groupLink?: string | null;
+  };
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -29,6 +36,8 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
   const [gameHandle, setGameHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -57,27 +66,83 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
       return;
     }
 
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'Please log in to register',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: 'Registration Submitted!',
-      description: 'Your payment is being verified. You will be notified once confirmed.',
-    });
-    
-    setIsSubmitting(false);
-    onSuccess();
-    onClose();
+    try {
+      // Create payment record
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          tournament_id: tournament.id,
+          amount: tournament.entryFee,
+          method: 'mpesa',
+          transaction_code: transactionCode.toUpperCase(),
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (paymentError) throw paymentError;
+
+      // Create registration record
+      const { error: regError } = await supabase
+        .from('registrations')
+        .insert({
+          user_id: user.id,
+          tournament_id: tournament.id,
+          game_handle: gameHandle,
+          payment_id: payment.id,
+          status: 'pending',
+        });
+
+      if (regError) throw regError;
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['user-registration'] });
+      queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament'] });
+
+      toast({
+        title: 'Registration Submitted!',
+        description: 'Your payment is being verified. You will be notified once confirmed.',
+      });
+      
+      onSuccess();
+      handleClose();
+    } catch (error: any) {
+      toast({
+        title: 'Registration Failed',
+        description: error.message || 'Something went wrong',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     setStep('instructions');
     setTransactionCode('');
-    setGameHandle('');
+    setGameHandle(profile?.game_handle || '');
     onClose();
   };
+
+  // Pre-fill game handle from profile
+  useState(() => {
+    if (profile?.game_handle) {
+      setGameHandle(profile.game_handle);
+    }
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -139,13 +204,13 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
 
               <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
                 <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-200">
+                <p className="text-sm text-muted-foreground">
                   After payment, save your M-Pesa confirmation message. You'll need the transaction code to verify.
                 </p>
               </div>
             </div>
 
-            <Button onClick={() => setStep('verify')} className="w-full" variant="neon">
+            <Button onClick={() => setStep('verify')} className="w-full">
               I've Made the Payment
             </Button>
           </div>
@@ -190,9 +255,15 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="flex-1"
-                variant="neon"
               >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
             </div>
           </div>
