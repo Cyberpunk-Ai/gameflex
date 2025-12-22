@@ -116,7 +116,7 @@ export default function AdminTournaments() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: 'upcoming' | 'registration_open' | 'registration_closed' | 'live' | 'completed' | 'cancelled' }) => {
       const { error } = await supabase.from('tournaments').update({ status }).eq('id', id);
       if (error) throw error;
     },
@@ -257,7 +257,7 @@ export default function AdminTournaments() {
             <div>KES {Number(t.prize_pool).toLocaleString()}</div>
             <div>{t.current_participants}/{t.max_participants}</div>
             <div>
-              <Select value={t.status} onValueChange={(status) => updateStatusMutation.mutate({ id: t.id, status })}>
+              <Select value={t.status} onValueChange={(status: 'upcoming' | 'registration_open' | 'registration_closed' | 'live' | 'completed' | 'cancelled') => updateStatusMutation.mutate({ id: t.id, status })}>
                 <SelectTrigger className="h-8 text-xs">
                   <Badge variant={t.status === 'live' ? 'destructive' : t.status === 'registration_open' ? 'default' : 'secondary'}>{statusLabels[t.status] ?? t.status}</Badge>
                 </SelectTrigger>
