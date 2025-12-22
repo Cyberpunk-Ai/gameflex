@@ -32,13 +32,27 @@ export default function AdminDashboard() {
   const { data: pendingPayments = [] } = useQuery({
     queryKey: ['pending-payments'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: paymentsData } = await supabase
         .from('payments')
-        .select('*, profiles(username)')
+        .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(5);
-      return data ?? [];
+      
+      if (!paymentsData || paymentsData.length === 0) return [];
+      
+      const userIds = [...new Set(paymentsData.map(p => p.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username')
+        .in('user_id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) ?? []);
+      
+      return paymentsData.map(p => ({
+        ...p,
+        profile: profileMap.get(p.user_id)
+      }));
     }
   });
 
@@ -92,7 +106,7 @@ export default function AdminDashboard() {
                   <div className="font-mono text-sm">{p.transaction_code ?? 'N/A'}</div>
                   <div className="text-xs text-muted-foreground">KES {Number(p.amount).toLocaleString()}</div>
                 </div>
-                <span className="text-xs text-muted-foreground">{p.profiles?.username}</span>
+                <span className="text-xs text-muted-foreground">{p.profile?.username}</span>
               </div>
             )) : <p className="text-muted-foreground text-center py-4">No pending payments</p>}
           </div>

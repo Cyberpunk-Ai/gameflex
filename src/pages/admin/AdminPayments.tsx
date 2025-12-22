@@ -1,24 +1,42 @@
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState } from 'react';
 
 export default function AdminPayments() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
 
-  const { data: payments = [] } = useQuery({
+  const { data: payments = [], isLoading } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: paymentsData } = await supabase
         .from('payments')
-        .select('*, profiles(username), tournaments(title)')
+        .select('*, tournaments(title)')
         .order('created_at', { ascending: false });
-      return data ?? [];
+      
+      if (!paymentsData) return [];
+      
+      const userIds = [...new Set(paymentsData.map(p => p.user_id))];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username')
+        .in('user_id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) ?? []);
+      
+      return paymentsData.map(p => ({
+        ...p,
+        profile: profileMap.get(p.user_id)
+      }));
     }
   });
 
@@ -34,6 +52,13 @@ export default function AdminPayments() {
         })
         .eq('id', id);
       if (error) throw error;
+      
+      if (status === 'verified') {
+        await supabase
+          .from('registrations')
+          .update({ status: 'confirmed' })
+          .eq('payment_id', id);
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
@@ -45,23 +70,35 @@ export default function AdminPayments() {
     }
   });
 
+  if (isLoading) {
+    return (
+      <div>
+        <h1 className="font-display text-2xl font-bold mb-6">Payment Verification</h1>
+        <div className="rounded-xl bg-card border border-border/50 p-8 text-center text-muted-foreground">
+          Loading payments...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="font-display text-2xl font-bold mb-6">Payment Verification</h1>
       <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
-        <div className="grid grid-cols-7 gap-4 p-4 bg-secondary/50 text-sm font-semibold text-muted-foreground">
+        <div className="grid grid-cols-8 gap-4 p-4 bg-secondary/50 text-sm font-semibold text-muted-foreground">
           <div>Transaction</div>
           <div>User</div>
           <div>Tournament</div>
           <div>Amount</div>
           <div>Status</div>
+          <div>Screenshot</div>
           <div>Date</div>
           <div>Actions</div>
         </div>
         {payments.map((payment: any) => (
-          <div key={payment.id} className="grid grid-cols-7 gap-4 p-4 border-t border-border/50 items-center text-sm">
+          <div key={payment.id} className="grid grid-cols-8 gap-4 p-4 border-t border-border/50 items-center text-sm">
             <div className="font-mono truncate">{payment.transaction_code ?? '-'}</div>
-            <div className="truncate">{payment.profiles?.username ?? '-'}</div>
+            <div className="truncate">{payment.profile?.username ?? '-'}</div>
             <div className="truncate">{payment.tournaments?.title ?? '-'}</div>
             <div className="font-semibold">KES {Number(payment.amount).toLocaleString()}</div>
             <div>
@@ -72,6 +109,19 @@ export default function AdminPayments() {
               }>
                 {payment.status}
               </Badge>
+            </div>
+            <div>
+              {payment.screenshot_url ? (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setSelectedScreenshot(payment.screenshot_url)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
             </div>
             <div className="text-muted-foreground">{new Date(payment.created_at).toLocaleDateString()}</div>
             <div className="flex gap-2">
@@ -102,6 +152,17 @@ export default function AdminPayments() {
           <div className="p-8 text-center text-muted-foreground">No payments found</div>
         )}
       </div>
+
+      <Dialog open={!!selectedScreenshot} onOpenChange={() => setSelectedScreenshot(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Screenshot</DialogTitle>
+          </DialogHeader>
+          {selectedScreenshot && (
+            <img src={selectedScreenshot} alt="Payment screenshot" className="w-full rounded-lg" />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
