@@ -56,12 +56,26 @@ export default function TournamentDetail() {
   const { data: registrations } = useQuery({
     queryKey: ['registrations', id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: regsData } = await supabase
         .from('registrations')
-        .select('*, profiles(username, avatar_url)')
+        .select('*')
         .eq('tournament_id', id)
         .eq('status', 'confirmed');
-      return data || [];
+      
+      if (!regsData || regsData.length === 0) return [];
+      
+      const userIds = [...new Set(regsData.map(r => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url')
+        .in('user_id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) ?? []);
+      
+      return regsData.map(r => ({
+        ...r,
+        profiles: profileMap.get(r.user_id)
+      }));
     },
     enabled: !!id,
   });

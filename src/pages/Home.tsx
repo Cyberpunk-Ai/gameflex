@@ -39,12 +39,26 @@ export default function Home() {
   const { data: leaderboard = [] } = useQuery({
     queryKey: ['home-leaderboard'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: statsData } = await supabase
         .from('leaderboard_stats')
-        .select('*, profiles(username, avatar_url)')
+        .select('*')
         .order('points', { ascending: false })
         .limit(5);
-      return data ?? [];
+      
+      if (!statsData || statsData.length === 0) return [];
+      
+      const userIds = [...new Set(statsData.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url, game_handle')
+        .in('user_id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) ?? []);
+      
+      return statsData.map(s => ({
+        ...s,
+        profiles: profileMap.get(s.user_id)
+      }));
     }
   });
 
