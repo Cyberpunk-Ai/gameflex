@@ -32,6 +32,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminTournaments from "./pages/admin/AdminTournaments";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminRegistrations from "./pages/admin/AdminRegistrations";
+import AdminMatches from "./pages/admin/AdminMatches";
+import AdminGameRooms from "./pages/admin/AdminGameRooms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +76,9 @@ const App = () => (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="tournaments" element={<AdminTournaments />} />
+              <Route path="registrations" element={<AdminRegistrations />} />
+              <Route path="matches" element={<AdminMatches />} />
+              <Route path="game-rooms" element={<AdminGameRooms />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
             </Route>
