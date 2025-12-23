@@ -1,11 +1,14 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Trophy, CreditCard, MessageSquare, Settings, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, Trophy, CreditCard, ClipboardList, Swords, Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Tournaments', href: '/admin/tournaments', icon: Trophy },
+  { name: 'Registrations', href: '/admin/registrations', icon: ClipboardList },
+  { name: 'Matches', href: '/admin/matches', icon: Swords },
+  { name: 'Game Rooms', href: '/admin/game-rooms', icon: Gamepad2 },
   { name: 'Payments', href: '/admin/payments', icon: CreditCard },
   { name: 'Users', href: '/admin/users', icon: Users },
 ];
