@@ -8,6 +8,13 @@ import { Layout } from "@/components/layout";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Tournaments from "./pages/Tournaments";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Refund from "./pages/Refund";
+import FairPlay from "./pages/FairPlay";
+import Contact from "./pages/Contact";
+import Report from "./pages/Report";
+import HowItWorks from "./pages/HowItWorks";
 import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
 import Dashboard from "./pages/Dashboard";
@@ -52,6 +59,13 @@ const App = () => (
               <Route path="/game-rooms" element={<GameRooms />} />
               <Route path="/rewards" element={<Rewards />} />
               <Route path="/my-matches" element={<MyMatches />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
+              <Route path="/fair-play" element={<FairPlay />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/report" element={<Report />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
             </Route>
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
