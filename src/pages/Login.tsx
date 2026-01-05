@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
-  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  phoneOrEmail: z.string().min(1, 'Phone number or email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -27,13 +27,18 @@ export default function Login() {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { phone: '', password: '' },
+    defaultValues: { phoneOrEmail: '', password: '' },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await login(data.phone, data.password);
+      // Determine if input is email or phone
+      const isEmail = data.phoneOrEmail.includes('@');
+      const email = isEmail ? data.phoneOrEmail : `${data.phoneOrEmail}@gameflex.app`;
+      
+      const { error } = await login(email, data.password);
+      if (error) throw error;
       toast({ title: 'Welcome back!', description: 'You have successfully logged in' });
       navigate('/');
     } catch (error) {
@@ -61,13 +66,13 @@ export default function Login() {
           <CardContent className="p-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormField control={form.control} name="phoneOrEmail" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Phone Number or Email</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input {...field} placeholder="0712345678" className="pl-10" />
+                        <Input {...field} placeholder="0712345678 or email@example.com" className="pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -97,7 +102,7 @@ export default function Login() {
               Don't have an account? <Link to="/register" className="text-primary hover:underline">Sign up</Link>
             </p>
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Demo: Use phone <strong>0712345678</strong> or <strong>0700000000</strong> (admin) with password <strong>password</strong>
+              Sign in using your phone number or email
             </p>
           </CardContent>
         </Card>
