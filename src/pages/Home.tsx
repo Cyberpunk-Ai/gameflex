@@ -1,9 +1,10 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Zap, Shield, ArrowRight, Star, Gamepad2, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TournamentCard } from '@/components/tournament-card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const features = [
@@ -23,6 +24,8 @@ const games = [
 ];
 
 export default function Home() {
+  const queryClient = useQueryClient();
+  
   const { data: tournaments = [] } = useQuery({
     queryKey: ['home-tournaments'],
     queryFn: async () => {
@@ -35,6 +38,24 @@ export default function Home() {
       return data ?? [];
     }
   });
+
+  // Real-time subscription for tournament updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('home-tournaments-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tournaments' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['home-tournaments'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: leaderboard = [] } = useQuery({
     queryKey: ['home-leaderboard'],

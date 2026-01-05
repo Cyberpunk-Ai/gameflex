@@ -41,7 +41,7 @@ export default function AdminPayments() {
   });
 
   const updatePaymentMutation = useMutation({
-    mutationFn: async ({ id, status, rejectionReason }: { id: string; status: 'verified' | 'rejected'; rejectionReason?: string }) => {
+    mutationFn: async ({ id, status, rejectionReason, tournamentId }: { id: string; status: 'verified' | 'rejected'; rejectionReason?: string; tournamentId?: string }) => {
       const { error } = await supabase
         .from('payments')
         .update({ 
@@ -59,13 +59,22 @@ export default function AdminPayments() {
           .update({ status: 'confirmed' })
           .eq('payment_id', id);
       }
+      
+      return { status, tournamentId };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+      // Also invalidate tournament queries so participant counts update
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['home-tournaments'] });
+      if (data.tournamentId) {
+        queryClient.invalidateQueries({ queryKey: ['tournament', data.tournamentId] });
+        queryClient.invalidateQueries({ queryKey: ['registrations', data.tournamentId] });
+      }
       toast({ 
-        title: variables.status === 'verified' ? 'Payment Verified' : 'Payment Rejected',
-        description: `Payment has been ${variables.status}`,
-        variant: variables.status === 'rejected' ? 'destructive' : 'default'
+        title: data.status === 'verified' ? 'Payment Verified' : 'Payment Rejected',
+        description: `Payment has been ${data.status}`,
+        variant: data.status === 'rejected' ? 'destructive' : 'default'
       });
     }
   });
@@ -130,7 +139,7 @@ export default function AdminPayments() {
                   <Button 
                     size="sm" 
                     variant="default" 
-                    onClick={() => updatePaymentMutation.mutate({ id: payment.id, status: 'verified' })}
+                    onClick={() => updatePaymentMutation.mutate({ id: payment.id, status: 'verified', tournamentId: payment.tournament_id })}
                     disabled={updatePaymentMutation.isPending}
                   >
                     <CheckCircle className="h-4 w-4" />
@@ -138,7 +147,7 @@ export default function AdminPayments() {
                   <Button 
                     size="sm" 
                     variant="destructive" 
-                    onClick={() => updatePaymentMutation.mutate({ id: payment.id, status: 'rejected', rejectionReason: 'Invalid transaction' })}
+                    onClick={() => updatePaymentMutation.mutate({ id: payment.id, status: 'rejected', rejectionReason: 'Invalid transaction', tournamentId: payment.tournament_id })}
                     disabled={updatePaymentMutation.isPending}
                   >
                     <XCircle className="h-4 w-4" />
