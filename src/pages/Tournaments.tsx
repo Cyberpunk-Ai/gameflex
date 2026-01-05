@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Gamepad2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TournamentCard } from '@/components/tournament-card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -15,6 +15,7 @@ export default function Tournaments() {
   const [search, setSearch] = useState('');
   const [gameFilter, setGameFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const queryClient = useQueryClient();
 
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ['tournaments'],
@@ -26,6 +27,24 @@ export default function Tournaments() {
       return data ?? [];
     }
   });
+
+  // Real-time subscription for tournament updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tournaments-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tournaments' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const filteredTournaments = tournaments.filter((t: any) => {
     const matchesSearch = t.title.toLowerCase().includes(search.toLowerCase());

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, Gamepad2, ArrowLeft, User, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { PaymentModal } from '@/components/payment-modal';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const statusLabels: Record<string, string> = { 
   live: 'LIVE', 
@@ -24,6 +24,7 @@ export default function TournamentDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [showPayment, setShowPayment] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: tournament, isLoading } = useQuery({
     queryKey: ['tournament', id],
@@ -38,6 +39,33 @@ export default function TournamentDetail() {
     },
     enabled: !!id,
   });
+
+  // Real-time subscription for this tournament
+  useEffect(() => {
+    if (!id) return;
+    
+    const channel = supabase
+      .channel(`tournament-${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tournaments', filter: `id=eq.${id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'registrations', filter: `tournament_id=eq.${id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['registrations', id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   const { data: matches } = useQuery({
     queryKey: ['matches', id],
