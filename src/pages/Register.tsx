@@ -78,6 +78,13 @@ export default function Register() {
                     <FormMessage />
                   </FormItem>
                 )} />
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (Optional - for login)</FormLabel>
+                    <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} placeholder="you@example.com" className="pl-10" type="email" /></div></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="username" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Username *</FormLabel>
