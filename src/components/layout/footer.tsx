@@ -26,7 +26,7 @@ const socialLinks = [
   { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
   { name: 'Instagram', icon: Instagram, href: 'https://instagram.com' },
   { name: 'YouTube', icon: Youtube, href: 'https://youtube.com' },
-  { name: 'WhatsApp', icon: MessageCircle, href: 'https://whatsapp.com' },
+  { name: 'WhatsApp', icon: MessageCircle, href: 'https://wa.me/254704208394' },
 ];
 
 export function Footer() {
@@ -122,9 +122,9 @@ export function Footer() {
                 <Mail className="h-4 w-4" />
                 support@gameflex.co.ke
               </a>
-              <a href="tel:+254700000000" className="flex items-center gap-2 hover:text-primary transition-colors">
+              <a href="tel:+254704208394" className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Phone className="h-4 w-4" />
-                +254 700 000 000
+                +254 704 208 394
               </a>
             </div>
             <p className="text-sm text-muted-foreground">
