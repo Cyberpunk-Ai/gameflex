@@ -27,6 +27,7 @@ import Marketplace from "./pages/Marketplace";
 import GameRooms from "./pages/GameRooms";
 import Rewards from "./pages/Rewards";
 import MyMatches from "./pages/MyMatches";
+import Wallet from "./pages/Wallet";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/game-rooms" element={<GameRooms />} />
               <Route path="/rewards" element={<Rewards />} />
               <Route path="/my-matches" element={<MyMatches />} />
+              <Route path="/wallet" element={<Wallet />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />

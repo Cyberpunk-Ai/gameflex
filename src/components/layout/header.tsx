@@ -91,7 +91,7 @@ export function Header() {
 
               {/* Wallet */}
               <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link to="/dashboard">
+                <Link to="/wallet">
                   <Wallet className="h-4 w-4" />
                   <span className="font-semibold">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</span>
                 </Link>
