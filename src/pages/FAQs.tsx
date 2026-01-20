@@ -13,7 +13,7 @@ const faqCategories = [
     faqs: [
       {
         question: 'How do I pay for tournament entry?',
-        answer: 'To pay for a tournament, click "Register" on the tournament page. You\'ll be prompted to pay via M-Pesa. Send the exact amount to our Paybill number, then upload a screenshot of your M-Pesa confirmation message. Our team will verify your payment within 24 hours.',
+        answer: 'To pay for a tournament, click "Register" on the tournament page. You\'ll be prompted to pay via M-Pesa Send Money to 0704208394. Send the exact amount, then enter your M-Pesa transaction code. Our team will verify your payment within 24 hours.',
       },
       {
         question: 'How long does payment verification take?',
