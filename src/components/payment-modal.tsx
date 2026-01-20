@@ -27,8 +27,7 @@ interface PaymentModalProps {
   onSuccess: () => void;
 }
 
-const MPESA_PAYBILL = '247247';
-const MPESA_ACCOUNT = 'GAMEFLEX';
+const MPESA_PHONE = '0704208394';
 
 export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: PaymentModalProps) {
   const [step, setStep] = useState<'instructions' | 'verify'>('instructions');
@@ -165,38 +164,26 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
               <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
                 <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  M-Pesa Paybill Instructions
+                  M-Pesa Send Money Instructions
                 </h4>
                 <ol className="space-y-2 text-sm">
                   <li>1. Go to M-Pesa on your phone</li>
-                  <li>2. Select <strong>Lipa na M-Pesa</strong></li>
-                  <li>3. Select <strong>Pay Bill</strong></li>
-                  <li>4. Enter Business Number: <strong>{MPESA_PAYBILL}</strong></li>
-                  <li>5. Enter Account Number: <strong>{MPESA_ACCOUNT}</strong></li>
-                  <li>6. Enter Amount: <strong>KES {tournament.entryFee}</strong></li>
-                  <li>7. Enter your M-Pesa PIN and confirm</li>
+                  <li>2. Select <strong>Send Money</strong></li>
+                  <li>3. Enter Phone Number: <strong>{MPESA_PHONE}</strong></li>
+                  <li>4. Enter Amount: <strong>KES {tournament.entryFee}</strong></li>
+                  <li>5. Enter your M-Pesa PIN and confirm</li>
                 </ol>
               </div>
 
               {/* Quick Copy */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <button
-                  onClick={() => copyToClipboard(MPESA_PAYBILL, 'Paybill')}
+                  onClick={() => copyToClipboard(MPESA_PHONE, 'Phone Number')}
                   className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-left"
                 >
-                  <span className="text-xs text-muted-foreground">Paybill</span>
+                  <span className="text-xs text-muted-foreground">Phone Number</span>
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold">{MPESA_PAYBILL}</span>
-                    <Copy className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </button>
-                <button
-                  onClick={() => copyToClipboard(MPESA_ACCOUNT, 'Account')}
-                  className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors text-left"
-                >
-                  <span className="text-xs text-muted-foreground">Account</span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold">{MPESA_ACCOUNT}</span>
+                    <span className="font-mono font-bold">{MPESA_PHONE}</span>
                     <Copy className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </button>
