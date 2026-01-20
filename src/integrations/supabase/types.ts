@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          name: string
+          points?: number
+          requirement_type: string
+          requirement_value?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
+      activity_feed: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          metadata: Json | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       game_rooms: {
         Row: {
           created_at: string
@@ -294,6 +363,7 @@ export type Database = {
           id: string
           is_verified: boolean | null
           phone: string | null
+          referral_code: string | null
           updated_at: string
           user_id: string
           username: string
@@ -307,6 +377,7 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           phone?: string | null
+          referral_code?: string | null
           updated_at?: string
           user_id: string
           username: string
@@ -320,10 +391,38 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           phone?: string | null
+          referral_code?: string | null
           updated_at?: string
           user_id?: string
           username?: string
           wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_claimed: boolean | null
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_claimed?: boolean | null
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_claimed?: boolean | null
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -554,6 +653,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
