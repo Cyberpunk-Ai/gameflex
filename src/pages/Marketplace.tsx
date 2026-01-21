@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Store, Plus, Search, User, Tag, ShoppingCart, Loader2, Upload } from 'lucide-react';
+import { Store, Plus, Search, User, Tag, MessageCircle, Loader2 } from 'lucide-react';
+import { ContactSellerModal } from '@/components/contact-seller-modal';
 
 const categoryIcons: Record<string, string> = {
   account: '👤',
@@ -28,6 +29,8 @@ const Marketplace = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isCreating, setIsCreating] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [contactListing, setContactListing] = useState<any>(null);
+  const [contactSeller, setContactSeller] = useState<any>(null);
   
   const [newListing, setNewListing] = useState({
     title: '',
@@ -51,10 +54,16 @@ const Marketplace = () => {
   const { data: sellers } = useQuery({
     queryKey: ['sellers'],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('user_id, username, avatar_url');
+      const { data } = await supabase.from('profiles').select('user_id, username, avatar_url, email, phone');
       return data || [];
     },
   });
+
+  const handleContactSeller = (listing: any) => {
+    const seller = getSellerInfo(listing.seller_id);
+    setContactListing(listing);
+    setContactSeller(seller);
+  };
 
   const getSellerInfo = (sellerId: string) => {
     return sellers?.find(s => s.user_id === sellerId);
@@ -315,8 +324,8 @@ const Marketplace = () => {
                       <Tag className="w-4 h-4 text-primary" />
                       <span className="font-bold text-primary">KES {Number(listing.price).toLocaleString()}</span>
                     </div>
-                    <Button size="sm" variant="outline">
-                      <ShoppingCart className="w-4 h-4 mr-2" />
+                    <Button size="sm" variant="outline" onClick={() => handleContactSeller(listing)}>
+                      <MessageCircle className="w-4 h-4 mr-2" />
                       Contact
                     </Button>
                   </CardFooter>
@@ -336,6 +345,17 @@ const Marketplace = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Contact Seller Modal */}
+        <ContactSellerModal
+          isOpen={!!contactListing}
+          onClose={() => {
+            setContactListing(null);
+            setContactSeller(null);
+          }}
+          listing={contactListing}
+          seller={contactSeller}
+        />
       </div>
     </div>
   );

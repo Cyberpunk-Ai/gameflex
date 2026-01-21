@@ -36,6 +36,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRegistrations from "./pages/admin/AdminRegistrations";
 import AdminMatches from "./pages/admin/AdminMatches";
 import AdminGameRooms from "./pages/admin/AdminGameRooms";
+import AdminMarketplace from "./pages/admin/AdminMarketplace";
+import AdminRoles from "./pages/admin/AdminRoles";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +85,8 @@ const App = () => (
               <Route path="game-rooms" element={<AdminGameRooms />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="marketplace" element={<AdminMarketplace />} />
+              <Route path="roles" element={<AdminRoles />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
