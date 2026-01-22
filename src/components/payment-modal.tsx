@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Phone, Copy, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Phone, Copy, AlertCircle, Loader2, Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,16 +34,33 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
   const [transactionCode, setTransactionCode] = useState('');
   const [gameHandle, setGameHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast({
-      title: 'Copied!',
-      description: `${label} copied to clipboard`,
-    });
+    toast({ title: 'Copied!', description: `${label} copied to clipboard` });
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file', description: 'Please select an image', variant: 'destructive' });
+      return;
+    }
+    setScreenshotFile(file);
+    setScreenshotPreview(URL.createObjectURL(file));
+  };
+
+  const removeScreenshot = () => {
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async () => {
@@ -77,6 +94,18 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
     setIsSubmitting(true);
     
     try {
+      let screenshotUrl = null;
+      
+      // Upload screenshot if provided
+      if (screenshotFile) {
+        const fileExt = screenshotFile.name.split('.').pop();
+        const filePath = `${user.id}/${tournament.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('screenshots').upload(filePath, screenshotFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('screenshots').getPublicUrl(filePath);
+        screenshotUrl = urlData.publicUrl;
+      }
+
       // Create payment record
       const { data: payment, error: paymentError } = await supabase
         .from('payments')
@@ -86,6 +115,7 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
           amount: tournament.entryFee,
           method: 'mpesa',
           transaction_code: transactionCode.toUpperCase(),
+          screenshot_url: screenshotUrl,
           status: 'pending',
         })
         .select()
@@ -133,6 +163,7 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
     setStep('instructions');
     setTransactionCode('');
     setGameHandle(profile?.game_handle || '');
+    removeScreenshot();
     onClose();
   };
 
@@ -230,27 +261,28 @@ export function PaymentModal({ tournament, isOpen, onClose, onSuccess }: Payment
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label>Payment Screenshot (Optional)</Label>
+              {screenshotPreview ? (
+                <div className="relative">
+                  <img src={screenshotPreview} alt="Screenshot" className="w-full rounded-lg border max-h-40 object-cover" />
+                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={removeScreenshot}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50">
+                  <Camera className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Upload M-Pesa screenshot</p>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+            </div>
+
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setStep('instructions')}
-                className="flex-1"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit'
-                )}
+              <Button variant="outline" onClick={() => setStep('instructions')} className="flex-1">Back</Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting...</> : 'Submit'}
               </Button>
             </div>
           </div>

@@ -10,7 +10,9 @@ import {
   LayoutDashboard,
   Bell,
   Wallet,
-  Shield
+  Shield,
+  MessageCircle,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,8 +32,8 @@ const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Tournaments', href: '/tournaments' },
   { name: 'Leaderboard', href: '/leaderboard' },
+  { name: 'Social', href: '/social' },
   { name: 'Marketplace', href: '/marketplace' },
-  { name: 'Support', href: '/support' },
 ];
 
 export function Header() {
@@ -79,6 +81,13 @@ export function Header() {
         <div className="hidden lg:flex items-center gap-3">
           {isAuthenticated && user ? (
             <>
+              {/* Messages */}
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/messages">
+                  <MessageCircle className="h-5 w-5" />
+                </Link>
+              </Button>
+
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative" asChild>
                 <Link to="/notifications">

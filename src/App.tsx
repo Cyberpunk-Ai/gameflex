@@ -28,6 +28,8 @@ import GameRooms from "./pages/GameRooms";
 import Rewards from "./pages/Rewards";
 import MyMatches from "./pages/MyMatches";
 import Wallet from "./pages/Wallet";
+import Messages from "./pages/Messages";
+import Social from "./pages/Social";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -66,6 +68,8 @@ const App = () => (
               <Route path="/rewards" element={<Rewards />} />
               <Route path="/my-matches" element={<MyMatches />} />
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/social" element={<Social />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />
