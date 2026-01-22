@@ -3,23 +3,28 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { User, Phone, Mail, Gamepad2, Wallet, Trophy, Target, Loader2, Camera } from 'lucide-react';
+import { User, Phone, Mail, Gamepad2, Wallet, Trophy, Target, Loader2, Camera, FileText, MessageCircle, Edit } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { EditProfileModal } from '@/components/profile/edit-profile-modal';
 
 const Profile = () => {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     phone: '',
     game_handle: '',
+    bio: '',
   });
 
   useEffect(() => {
@@ -28,6 +33,7 @@ const Profile = () => {
         username: profile.username || '',
         phone: profile.phone || '',
         game_handle: profile.game_handle || '',
+        bio: (profile as any).bio || '',
       });
     }
   }, [profile]);
@@ -160,16 +166,34 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-              <Button
-                variant={isEditing ? 'outline' : 'default'}
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? 'Cancel' : 'Edit Profile'}
-              </Button>
+              <div className="flex gap-2">
+                <Link to="/messages">
+                  <Button variant="outline" size="icon">
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Button onClick={() => setShowEditModal(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </div>
             </div>
           </CardHeader>
           
           <CardContent className="space-y-6">
+            {/* Bio Section */}
+            {(profile as any).bio && (
+              <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">About</p>
+                    <p className="text-sm whitespace-pre-wrap">{(profile as any).bio}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {isEditing ? (
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -319,6 +343,11 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
+
+      <EditProfileModal 
+        open={showEditModal} 
+        onOpenChange={setShowEditModal} 
+      />
     </div>
   );
 };
