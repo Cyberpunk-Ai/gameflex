@@ -30,6 +30,7 @@ import MyMatches from "./pages/MyMatches";
 import Wallet from "./pages/Wallet";
 import Messages from "./pages/Messages";
 import Social from "./pages/Social";
+import Achievements from "./pages/Achievements";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -40,6 +41,7 @@ import AdminMatches from "./pages/admin/AdminMatches";
 import AdminGameRooms from "./pages/admin/AdminGameRooms";
 import AdminMarketplace from "./pages/admin/AdminMarketplace";
 import AdminRoles from "./pages/admin/AdminRoles";
+import AdminAchievements from "./pages/admin/AdminAchievements";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +59,7 @@ const App = () => (
               <Route path="/tournaments" element={<Tournaments />} />
               <Route path="/tournaments/:id" element={<TournamentDetail />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/achievements" element={<Achievements />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
@@ -89,6 +92,7 @@ const App = () => (
               <Route path="game-rooms" element={<AdminGameRooms />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="achievements" element={<AdminAchievements />} />
               <Route path="marketplace" element={<AdminMarketplace />} />
               <Route path="roles" element={<AdminRoles />} />
             </Route>

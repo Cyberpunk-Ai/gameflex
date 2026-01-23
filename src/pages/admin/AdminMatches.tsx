@@ -150,9 +150,16 @@ export default function AdminMatches() {
       const { error } = await supabase.from('matches').update(update).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-matches'] });
-      toast({ title: 'Match Updated' });
+      if (variables.winner_id) {
+        toast({ 
+          title: 'Match Completed!', 
+          description: 'Stats updated, achievements checked, and activity logged automatically.' 
+        });
+      } else {
+        toast({ title: 'Match Updated' });
+      }
       setSelectedMatch(null);
     },
     onError: (error: any) => {

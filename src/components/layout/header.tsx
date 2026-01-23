@@ -12,7 +12,8 @@ import {
   Wallet,
   Shield,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Tournaments', href: '/tournaments' },
   { name: 'Leaderboard', href: '/leaderboard' },
+  { name: 'Achievements', href: '/achievements' },
   { name: 'Social', href: '/social' },
   { name: 'Marketplace', href: '/marketplace' },
 ];
