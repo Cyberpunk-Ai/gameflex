@@ -152,10 +152,15 @@ export default function AdminMatches() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-matches'] });
+      
+      // Invalidate leaderboard queries to reflect new stats in real-time
       if (variables.winner_id) {
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboard-stats'] });
         toast({ 
-          title: 'Match Completed!', 
-          description: 'Stats updated, achievements checked, and activity logged automatically.' 
+          title: '✅ Match Completed!', 
+          description: 'Leaderboard updated with new stats, achievements checked, and activity logged.' 
         });
       } else {
         toast({ title: 'Match Updated' });

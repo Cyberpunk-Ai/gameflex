@@ -1,13 +1,18 @@
-import { Trophy, Medal, TrendingUp, Crown, Phone } from 'lucide-react';
+import { useEffect } from 'react';
+import { Trophy, Medal, TrendingUp, Crown, Phone, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Leaderboard() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   const { data: leaderboard = [], isLoading, refetch } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: async () => {
@@ -32,8 +37,34 @@ export default function Leaderboard() {
         profiles: profileMap.get(s.user_id)
       }));
     },
-    refetchInterval: 30000, // Refetch every 30 seconds for live updates
   });
+
+  // Real-time subscription for leaderboard updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('leaderboard-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leaderboard_stats'
+        },
+        (payload) => {
+          console.log('Leaderboard update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+          toast({
+            title: '📊 Leaderboard Updated',
+            description: 'Rankings have been refreshed with new results!',
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, toast]);
 
   const getRankIcon = (index: number) => {
     if (index === 0) return <Crown className="h-5 w-5 text-yellow-500" />;
@@ -73,7 +104,13 @@ export default function Leaderboard() {
               <Trophy className="h-8 w-8 text-primary" />
               Leaderboard
             </h1>
-            <p className="text-muted-foreground">Top players ranked by performance • Auto-updates every 30s</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              Top players ranked by performance 
+              <Badge variant="outline" className="ml-2 text-xs gap-1">
+                <Zap className="h-3 w-3 text-green-500" />
+                Live Updates
+              </Badge>
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <TrendingUp className="h-4 w-4 mr-2" />
