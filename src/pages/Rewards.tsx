@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gift, Trophy, Users, Star, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { Gift, Trophy, Users, Star, Clock, CheckCircle, Loader2, Zap } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
 const rewardIcons: Record<string, React.ReactNode> = {
@@ -41,6 +41,44 @@ const Rewards = () => {
     },
     enabled: !!user,
   });
+
+  // Real-time subscription for rewards updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('rewards-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rewards',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Rewards update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['rewards', user.id] });
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: '🎉 New Reward!',
+              description: 'You have received a new reward! Check it out.',
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: '💰 Reward Updated',
+              description: 'Your reward status has been updated.',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient, toast]);
 
   const claimMutation = useMutation({
     mutationFn: async (rewardId: string) => {
@@ -88,11 +126,19 @@ const Rewards = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Gift className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold font-display">Rewards</h1>
-            <p className="text-muted-foreground">Your earnings and prizes</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Gift className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold font-display">Rewards</h1>
+              <p className="text-muted-foreground flex items-center gap-2">
+                Your earnings and prizes
+                <Badge variant="outline" className="ml-2 text-xs gap-1">
+                  <Zap className="h-3 w-3 text-green-500" />
+                  Live Updates
+                </Badge>
+              </p>
+            </div>
           </div>
         </div>
 
