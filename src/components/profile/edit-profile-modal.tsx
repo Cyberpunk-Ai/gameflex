@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth-context';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Loader2, Save } from 'lucide-react';
+import { Camera, Loader2, Save, Phone, User, Gamepad2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditProfileModalProps {
@@ -28,6 +28,18 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
     phone: profile?.phone ?? '',
     game_handle: profile?.game_handle ?? ''
   });
+
+  // Sync form data when profile changes or modal opens
+  useEffect(() => {
+    if (open && profile) {
+      setFormData({
+        username: profile.username ?? '',
+        bio: (profile as any).bio ?? '',
+        phone: profile.phone ?? '',
+        game_handle: profile.game_handle ?? ''
+      });
+    }
+  }, [open, profile]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -107,17 +119,20 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle className="text-xl font-display">Edit Profile</DialogTitle>
+          <DialogDescription>
+            Update your public profile information visible to other players
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
           {/* Avatar */}
           <div className="flex justify-center">
-            <div className="relative">
-              <Avatar className="h-24 w-24">
+            <div className="relative group">
+              <Avatar className="h-28 w-28 border-4 border-primary/30 shadow-lg">
                 <AvatarImage src={avatarPreview ?? profile?.avatar_url} />
-                <AvatarFallback className="text-2xl">
-                  {formData.username?.charAt(0).toUpperCase()}
+                <AvatarFallback className="text-3xl bg-gradient-to-br from-primary/20 to-accent/20">
+                  {formData.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <input
@@ -130,7 +145,7 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
               <Button
                 variant="secondary"
                 size="icon"
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
+                className="absolute bottom-0 right-0 h-9 w-9 rounded-full shadow-md border-2 border-background"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Camera className="h-4 w-4" />
@@ -141,59 +156,78 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
           {/* Form */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                Username
+              </Label>
               <Input
                 id="username"
                 value={formData.username}
                 onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                 placeholder="Your username"
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio" className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Bio
+              </Label>
               <Textarea
                 id="bio"
                 value={formData.bio}
                 onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell others about yourself..."
-                className="resize-none"
+                placeholder="Tell others about yourself, your gaming style..."
+                className="resize-none min-h-[80px]"
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone" className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                WhatsApp Number
+                <span className="text-xs text-muted-foreground ml-auto">(Public)</span>
+              </Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+254 7XX XXX XXX"
+                className="h-11"
               />
+              <p className="text-xs text-muted-foreground">
+                Other players can contact you via WhatsApp for match coordination
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="game_handle">Game Handle / IGN</Label>
+              <Label htmlFor="game_handle" className="flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                Game Handle / IGN
+              </Label>
               <Input
                 id="game_handle"
                 value={formData.game_handle}
                 onChange={(e) => setFormData(prev => ({ ...prev, game_handle: e.target.value }))}
                 placeholder="Your in-game name"
+                className="h-11"
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-11"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button
-              className="flex-1"
+              className="flex-1 h-11"
               onClick={() => updateProfileMutation.mutate()}
               disabled={updateProfileMutation.isPending || !formData.username.trim()}
             >

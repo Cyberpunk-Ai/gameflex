@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight } from 'lucide-react';
+import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight, Edit, Phone, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth-context';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,9 +11,11 @@ import { QuickActions } from '@/components/quick-actions';
 import { ReferralCard } from '@/components/referral-card';
 import { AchievementsDisplay } from '@/components/achievements-display';
 import { ActivityFeed } from '@/components/activity-feed';
+import { EditProfileModal } from '@/components/profile/edit-profile-modal';
 
 export default function Dashboard() {
   const { user, profile, isAuthenticated } = useAuth();
+  const [showEditProfile, setShowEditProfile] = useState(false);
   
   const { data: registrations = [] } = useQuery({
     queryKey: ['user-registrations', user?.id],
@@ -112,10 +116,56 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold mb-2">Welcome back, {profile?.username ?? 'Gamer'}!</h1>
-        <p className="text-muted-foreground">Here's your gaming overview</p>
+      {/* Profile Card Header */}
+      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border border-primary/20">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="relative group">
+            <Avatar className="h-20 w-20 border-4 border-primary/30">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback className="text-2xl bg-primary/20 font-bold">
+                {profile?.username?.charAt(0).toUpperCase() ?? 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="font-display text-2xl md:text-3xl font-bold">
+                {profile?.username ?? 'Gamer'}
+              </h1>
+              {profile?.is_verified && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-400">Verified</Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mb-2">
+              {(profile as any)?.bio || 'No bio yet - tell others about yourself!'}
+            </p>
+            <div className="flex flex-wrap gap-3 text-sm">
+              {profile?.game_handle && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/50">
+                  <Gamepad2 className="h-3.5 w-3.5" />
+                  {profile.game_handle}
+                </span>
+              )}
+              {profile?.phone && (
+                <a 
+                  href={`https://wa.me/${profile.phone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+          
+          <Button onClick={() => setShowEditProfile(true)} className="shrink-0">
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+        </div>
       </div>
 
       {/* Quick Actions */}
@@ -255,6 +305,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal open={showEditProfile} onOpenChange={setShowEditProfile} />
     </div>
   );
 }
