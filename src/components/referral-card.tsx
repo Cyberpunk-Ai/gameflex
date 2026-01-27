@@ -50,7 +50,7 @@ export function ReferralCard() {
         </div>
         <div>
           <h3 className="font-display font-bold text-lg">Invite Friends</h3>
-          <p className="text-sm text-muted-foreground">Earn KES 100 for each referral</p>
+          <p className="text-sm text-muted-foreground">Earn points for each referral.... coming soon</p>
         </div>
       </div>
 
