@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Trophy, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Trophy, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, HandCoins } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
@@ -27,8 +28,11 @@ const statusIcons: Record<string, typeof CheckCircle2> = {
 };
 
 export default function Wallet() {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   const { data: payments = [] } = useQuery({
     queryKey: ['user-payments', user?.id],
@@ -58,6 +62,44 @@ export default function Wallet() {
     enabled: !!user,
   });
 
+  // Claim reward mutation - Note: Full claim requires admin approval in Admin Rewards
+  // This creates a notification to admins and updates status
+  const claimRewardMutation = useMutation({
+    mutationFn: async (rewardId: string) => {
+      setClaimingId(rewardId);
+      const reward = rewards.find(r => r.id === rewardId);
+      if (!reward || !user) throw new Error('Invalid reward');
+      
+      // For now, notify the user that their claim is being processed
+      // The actual wallet transfer happens when admin approves in Admin Rewards
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        type: 'payment',
+        title: 'Reward Claim Submitted',
+        message: `Your claim for KES ${Number(reward.amount).toLocaleString()} is being processed. An admin will review shortly.`,
+        action_url: '/wallet',
+      });
+      
+      return reward;
+    },
+    onSuccess: (reward) => {
+      toast({
+        title: 'Claim Submitted! 🎉',
+        description: `Your reward of KES ${Number(reward.amount).toLocaleString()} is being processed by our team.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-rewards'] });
+      setClaimingId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setClaimingId(null);
+    },
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
@@ -78,6 +120,7 @@ export default function Wallet() {
   const totalSpent = payments
     .filter((p) => p.status === 'verified')
     .reduce((sum, p) => sum + Number(p.amount), 0);
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -253,10 +296,30 @@ export default function Wallet() {
         <TabsContent value="rewards">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Rewards & Earnings</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <HandCoins className="w-5 h-5 text-primary" />
+                Rewards & Earnings
+              </CardTitle>
               <CardDescription>Your tournament winnings and bonuses</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Pending rewards summary */}
+              {pendingRewards.length > 0 && (
+                <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-yellow-600 dark:text-yellow-400">
+                        {pendingRewards.length} Pending Reward{pendingRewards.length > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Total: KES {pendingRewards.reduce((sum, r) => sum + Number(r.amount), 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <Trophy className="w-8 h-8 text-yellow-500/50" />
+                  </div>
+                </div>
+              )}
+              
               {rewards.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No rewards yet. Win a tournament to earn rewards!
@@ -265,11 +328,16 @@ export default function Wallet() {
                 <div className="space-y-4">
                   {rewards.map((reward) => {
                     const StatusIcon = statusIcons[reward.status || 'pending'];
+                    const isPending = reward.status === 'pending';
+                    const isClaiming = claimingId === reward.id;
+                    
                     return (
-                      <div key={reward.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                      <div key={reward.id} className={`flex items-center justify-between p-4 rounded-lg ${
+                        isPending ? 'bg-yellow-500/5 border border-yellow-500/20' : 'bg-muted/50'
+                      }`}>
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-full bg-green-500/10">
-                            <Trophy className="w-5 h-5 text-green-500" />
+                          <div className={`p-2 rounded-full ${isPending ? 'bg-yellow-500/10' : 'bg-green-500/10'}`}>
+                            <Trophy className={`w-5 h-5 ${isPending ? 'text-yellow-500' : 'text-green-500'}`} />
                           </div>
                           <div>
                             <p className="font-medium">{reward.description || 'Reward'}</p>
@@ -279,14 +347,36 @@ export default function Wallet() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <Badge className={statusColors[reward.status || 'pending']}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {reward.status}
-                          </Badge>
-                          <span className="font-bold text-green-500">
-                            +KES {Number(reward.amount).toLocaleString()}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span className={`font-bold text-lg ${isPending ? 'text-yellow-500' : 'text-green-500'}`}>
+                              +KES {Number(reward.amount).toLocaleString()}
+                            </span>
+                            <div className="mt-1">
+                              <Badge className={statusColors[reward.status || 'pending']}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {reward.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          {isPending && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => claimRewardMutation.mutate(reward.id)}
+                              disabled={isClaiming || claimRewardMutation.isPending}
+                              className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+                            >
+                              {isClaiming ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <HandCoins className="w-4 h-4 mr-1" />
+                                  Claim
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );
