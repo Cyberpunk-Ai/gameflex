@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Trophy, CreditCard, ClipboardList, Swords, Gamepad2, Store, Shield, Award } from 'lucide-react';
+import { LayoutDashboard, Users, Trophy, CreditCard, ClipboardList, Swords, Gamepad2, Store, Shield, Award, Gift, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 
@@ -10,9 +10,11 @@ const adminNav = [
   { name: 'Matches', href: '/admin/matches', icon: Swords },
   { name: 'Game Rooms', href: '/admin/game-rooms', icon: Gamepad2 },
   { name: 'Payments', href: '/admin/payments', icon: CreditCard },
+  { name: 'Rewards', href: '/admin/rewards', icon: Gift },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Achievements', href: '/admin/achievements', icon: Award },
   { name: 'Marketplace', href: '/admin/marketplace', icon: Store },
+  { name: 'Support', href: '/admin/support', icon: MessageSquare },
   { name: 'Roles', href: '/admin/roles', icon: Shield },
 ];
 

@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 const statusLabels: Record<string, string> = { 
   live: 'LIVE', 
@@ -67,7 +68,7 @@ export default function TournamentDetail() {
     };
   }, [id, queryClient]);
 
-  const { data: matches } = useQuery({
+  const { data: matchesData } = useQuery({
     queryKey: ['matches', id],
     queryFn: async () => {
       const { data } = await supabase
@@ -76,10 +77,37 @@ export default function TournamentDetail() {
         .eq('tournament_id', id)
         .order('round', { ascending: true })
         .order('match_number', { ascending: true });
-      return data || [];
+      
+      if (!data || data.length === 0) return [];
+      
+      // Get all unique player IDs from matches
+      const playerIds = [...new Set([
+        ...data.map(m => m.player1_id).filter(Boolean),
+        ...data.map(m => m.player2_id).filter(Boolean),
+        ...data.map(m => m.winner_id).filter(Boolean)
+      ])] as string[];
+      
+      if (playerIds.length === 0) return data.map(m => ({ ...m, player1: null, player2: null }));
+      
+      // Fetch profiles for all players
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url, game_handle')
+        .in('user_id', playerIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) ?? []);
+      
+      return data.map(m => ({
+        ...m,
+        player1: m.player1_id ? profileMap.get(m.player1_id) : null,
+        player2: m.player2_id ? profileMap.get(m.player2_id) : null,
+        winner: m.winner_id ? profileMap.get(m.winner_id) : null,
+      }));
     },
     enabled: !!id,
   });
+
+  const matches = matchesData;
 
   const { data: registrations } = useQuery({
     queryKey: ['registrations', id],
@@ -270,27 +298,79 @@ export default function TournamentDetail() {
             <h3 className="font-display font-bold mb-6">Tournament Bracket</h3>
             {matches && matches.length > 0 ? (
               <div className="space-y-4">
-                {matches.map((match: any) => (
-                  <div key={match.id} className="p-4 rounded-lg bg-secondary/50 border border-border/50">
-                    <div className="flex items-center justify-between">
-                      <div>Round {match.round} • Match {match.match_number}</div>
-                      <Badge variant={match.status === 'live' ? 'destructive' : match.status === 'completed' ? 'secondary' : 'outline'}>
-                        {match.status}
-                      </Badge>
-                    </div>
-                    <div className="mt-3 flex items-center gap-4">
-                      <div className="flex-1 p-2 rounded bg-background">
-                        Player {match.player1_id ? match.player1_id.slice(0, 8) : 'TBD'} 
-                        {match.player1_score !== null && <span className="float-right font-bold">{match.player1_score}</span>}
+                {matches.map((match: any) => {
+                  const isPlayer1Winner = match.winner_id === match.player1_id;
+                  const isPlayer2Winner = match.winner_id === match.player2_id;
+                  
+                  return (
+                    <div key={match.id} className="p-4 rounded-lg bg-secondary/50 border border-border/50">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-sm text-muted-foreground">Round {match.round} • Match {match.match_number}</div>
+                        <Badge variant={match.status === 'live' ? 'destructive' : match.status === 'completed' ? 'secondary' : 'outline'}>
+                          {match.status === 'live' && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2" />}
+                          {match.status}
+                        </Badge>
                       </div>
-                      <span className="text-muted-foreground">vs</span>
-                      <div className="flex-1 p-2 rounded bg-background">
-                        Player {match.player2_id ? match.player2_id.slice(0, 8) : 'TBD'} 
-                        {match.player2_score !== null && <span className="float-right font-bold">{match.player2_score}</span>}
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "flex-1 p-3 rounded-lg bg-background flex items-center justify-between",
+                          isPlayer1Winner && "border-2 border-green-500/50 bg-green-500/10"
+                        )}>
+                          <div className="flex items-center gap-2">
+                            {match.player1?.avatar_url ? (
+                              <img src={match.player1.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                            ) : match.player1_id ? (
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                                {(match.player1?.username || 'P').charAt(0).toUpperCase()}
+                              </div>
+                            ) : null}
+                            <div>
+                              <p className={cn("font-medium", isPlayer1Winner && "text-green-500")}>
+                                {match.player1?.username || match.player1?.game_handle || (match.player1_id ? 'Loading...' : 'TBD')}
+                              </p>
+                              {match.player1?.game_handle && match.player1?.username && (
+                                <p className="text-xs text-muted-foreground">{match.player1.game_handle}</p>
+                              )}
+                            </div>
+                          </div>
+                          {match.player1_score !== null && (
+                            <span className={cn("text-xl font-bold", isPlayer1Winner && "text-green-500")}>
+                              {match.player1_score}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-muted-foreground font-bold">VS</span>
+                        <div className={cn(
+                          "flex-1 p-3 rounded-lg bg-background flex items-center justify-between",
+                          isPlayer2Winner && "border-2 border-green-500/50 bg-green-500/10"
+                        )}>
+                          <div className="flex items-center gap-2">
+                            {match.player2?.avatar_url ? (
+                              <img src={match.player2.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                            ) : match.player2_id ? (
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                                {(match.player2?.username || 'P').charAt(0).toUpperCase()}
+                              </div>
+                            ) : null}
+                            <div>
+                              <p className={cn("font-medium", isPlayer2Winner && "text-green-500")}>
+                                {match.player2?.username || match.player2?.game_handle || (match.player2_id ? 'Loading...' : 'TBD')}
+                              </p>
+                              {match.player2?.game_handle && match.player2?.username && (
+                                <p className="text-xs text-muted-foreground">{match.player2.game_handle}</p>
+                              )}
+                            </div>
+                          </div>
+                          {match.player2_score !== null && (
+                            <span className={cn("text-xl font-bold", isPlayer2Winner && "text-green-500")}>
+                              {match.player2_score}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-8">Brackets will be generated when the tournament starts</p>
