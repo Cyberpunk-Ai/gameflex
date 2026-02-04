@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings as SettingsIcon, Bell, Shield, Trash2, Loader2 } from 'lucide-react';
+import { NotificationSettings } from '@/components/notifications/notification-settings';
 
 const Settings = () => {
   const { user, logout } = useAuth();
@@ -239,6 +240,9 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Push Notifications */}
+        <NotificationSettings />
 
         {/* Danger Zone */}
         <Card className="border-destructive/50 bg-card/80 backdrop-blur-sm">

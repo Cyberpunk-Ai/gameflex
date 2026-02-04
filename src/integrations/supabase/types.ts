@@ -422,6 +422,8 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string | null
+          followers_count: number | null
+          following_count: number | null
           game_handle: string | null
           id: string
           is_verified: boolean | null
@@ -437,6 +439,8 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          followers_count?: number | null
+          following_count?: number | null
           game_handle?: string | null
           id?: string
           is_verified?: boolean | null
@@ -452,6 +456,8 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          followers_count?: number | null
+          following_count?: number | null
           game_handle?: string | null
           id?: string
           is_verified?: boolean | null
@@ -811,6 +817,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

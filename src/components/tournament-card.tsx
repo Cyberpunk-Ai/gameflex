@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, Gamepad2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +60,8 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Cancelled',
 };
 
-export function TournamentCard({ tournament, compact = false }: TournamentCardProps) {
+export const TournamentCard = forwardRef<HTMLDivElement, TournamentCardProps>(
+  function TournamentCard({ tournament, compact = false }, ref) {
   const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('en-KE', {
       month: 'short',
@@ -99,6 +101,7 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
 
   return (
     <div
+      ref={ref}
       className={cn(
         "group relative rounded-2xl border bg-gradient-to-br overflow-hidden transition-all hover:shadow-xl hover:shadow-primary/10",
         gameColors[tournament.game] || gameColors.other
@@ -200,4 +203,4 @@ export function TournamentCard({ tournament, compact = false }: TournamentCardPr
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Trophy, Medal, TrendingUp, Crown, Phone, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { FollowButton } from '@/components/social/follow-button';
 
 export default function Leaderboard() {
   const queryClient = useQueryClient();
@@ -150,16 +152,20 @@ export default function Leaderboard() {
                     
                     <div className="text-5xl mb-4 mt-2">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</div>
                     
-                    <Avatar className={`h-24 w-24 mx-auto mb-4 border-4 ${
-                      index === 0 ? 'border-yellow-500/50' : index === 1 ? 'border-gray-400/50' : 'border-orange-500/50'
-                    }`}>
-                      <AvatarImage src={player.profiles?.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-primary/20 text-primary font-bold">
-                        {(player.profiles?.username ?? 'U').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Link to={`/player/${player.user_id}`}>
+                      <Avatar className={`h-24 w-24 mx-auto mb-4 border-4 transition-transform hover:scale-105 ${
+                        index === 0 ? 'border-yellow-500/50' : index === 1 ? 'border-gray-400/50' : 'border-orange-500/50'
+                      }`}>
+                        <AvatarImage src={player.profiles?.avatar_url} />
+                        <AvatarFallback className="text-2xl bg-primary/20 text-primary font-bold">
+                          {(player.profiles?.username ?? 'U').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
                     
-                    <h3 className="font-display text-xl font-bold">{player.profiles?.username ?? 'Unknown'}</h3>
+                    <Link to={`/player/${player.user_id}`} className="hover:text-primary transition-colors">
+                      <h3 className="font-display text-xl font-bold">{player.profiles?.username ?? 'Unknown'}</h3>
+                    </Link>
                     <p className="text-muted-foreground text-sm mb-2">{player.profiles?.game_handle ?? '-'}</p>
                     
                     {/* Bio snippet */}
@@ -195,7 +201,7 @@ export default function Leaderboard() {
                             href={`https://wa.me/${player.profiles.phone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-3 px-3 py-1.5 rounded-full bg-green-600/20 text-green-400 text-xs hover:bg-green-600/30 transition-colors"
+                            className="inline-flex items-center gap-1 mt-3 mr-2 px-3 py-1.5 rounded-full bg-green-600/20 text-green-400 text-xs hover:bg-green-600/30 transition-colors"
                           >
                             <Phone className="h-3 w-3" />
                             WhatsApp
@@ -204,6 +210,13 @@ export default function Leaderboard() {
                         <TooltipContent>Contact via WhatsApp</TooltipContent>
                       </Tooltip>
                     )}
+                    <FollowButton 
+                      userId={player.user_id} 
+                      username={player.profiles?.username}
+                      size="sm"
+                      showText={false}
+                      className="mt-3"
+                    />
                   </div>
                 );
               })}
@@ -241,14 +254,18 @@ export default function Leaderboard() {
                     
                     {/* Player Info */}
                     <div className="col-span-1 md:col-span-4 flex items-center gap-3">
-                      <Avatar className="h-12 w-12 border-2 border-border">
-                        <AvatarImage src={player.profiles?.avatar_url} />
-                        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-                          {(player.profiles?.username ?? 'U').slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <div className="font-semibold truncate">{player.profiles?.username ?? 'Unknown'}</div>
+                      <Link to={`/player/${player.user_id}`}>
+                        <Avatar className="h-12 w-12 border-2 border-border transition-transform hover:scale-105">
+                          <AvatarImage src={player.profiles?.avatar_url} />
+                          <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                            {(player.profiles?.username ?? 'U').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <Link to={`/player/${player.user_id}`} className="font-semibold truncate block hover:text-primary transition-colors">
+                          {player.profiles?.username ?? 'Unknown'}
+                        </Link>
                         <div className="text-xs text-muted-foreground truncate">{player.profiles?.game_handle ?? '-'}</div>
                         {player.profiles?.bio && (
                           <div className="text-xs text-muted-foreground/70 truncate hidden lg:block">
@@ -256,6 +273,13 @@ export default function Leaderboard() {
                           </div>
                         )}
                       </div>
+                      <FollowButton 
+                        userId={player.user_id} 
+                        username={player.profiles?.username}
+                        size="sm"
+                        variant="ghost"
+                        showText={false}
+                      />
                     </div>
                     
                     {/* Record */}
