@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth-context';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import { StatusComments } from '@/components/social/status-comments';
 import { useToast } from '@/hooks/use-toast';
+import { FollowButton } from '@/components/social/follow-button';
 
 export function StatusFeed() {
   const { user } = useAuth();
@@ -161,14 +163,30 @@ export function StatusFeed() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={status.profile?.avatar_url} />
-                  <AvatarFallback>
-                    {status.profile?.username?.charAt(0).toUpperCase() ?? '?'}
-                  </AvatarFallback>
-                </Avatar>
+                <Link to={`/player/${status.user_id}`}>
+                  <Avatar className="h-10 w-10 transition-transform hover:scale-105">
+                    <AvatarImage src={status.profile?.avatar_url} />
+                    <AvatarFallback>
+                      {status.profile?.username?.charAt(0).toUpperCase() ?? '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
                 <div>
-                  <p className="font-medium">{status.profile?.username ?? 'Unknown'}</p>
+                  <div className="flex items-center gap-2">
+                    <Link to={`/player/${status.user_id}`} className="font-medium hover:text-primary transition-colors">
+                      {status.profile?.username ?? 'Unknown'}
+                    </Link>
+                    {user && user.id !== status.user_id && (
+                      <FollowButton 
+                        userId={status.user_id} 
+                        username={status.profile?.username}
+                        size="sm"
+                        variant="ghost"
+                        showText={false}
+                        className="h-7 w-7 p-0"
+                      />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(status.created_at), { addSuffix: true })}
                   </p>

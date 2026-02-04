@@ -31,6 +31,7 @@ import Wallet from "./pages/Wallet";
 import Messages from "./pages/Messages";
 import Social from "./pages/Social";
 import Achievements from "./pages/Achievements";
+import PlayerProfile from "./pages/PlayerProfile";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -46,6 +47,13 @@ import AdminRewards from "./pages/admin/AdminRewards";
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminLeaderboard from "./pages/admin/AdminLeaderboard";
 import NotFound from "./pages/NotFound";
+import { usePushNotifications } from "./hooks/use-push-notifications";
+
+// Wrapper component to use hooks
+function AppContent() {
+  usePushNotifications();
+  return null;
+}
 
 const queryClient = new QueryClient();
 
@@ -55,6 +63,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <AppContent />
         <BrowserRouter>
           <Routes>
             <Route element={<Layout />}>
@@ -65,6 +74,7 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/player/:id" element={<PlayerProfile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/faqs" element={<FAQs />} />
