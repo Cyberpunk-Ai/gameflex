@@ -44,6 +44,7 @@ import AdminRoles from "./pages/admin/AdminRoles";
 import AdminAchievements from "./pages/admin/AdminAchievements";
 import AdminRewards from "./pages/admin/AdminRewards";
 import AdminSupport from "./pages/admin/AdminSupport";
+import AdminLeaderboard from "./pages/admin/AdminLeaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="users" element={<AdminUsers />} />
               <Route path="achievements" element={<AdminAchievements />} />
               <Route path="rewards" element={<AdminRewards />} />
+              <Route path="leaderboard" element={<AdminLeaderboard />} />
               <Route path="marketplace" element={<AdminMarketplace />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="roles" element={<AdminRoles />} />

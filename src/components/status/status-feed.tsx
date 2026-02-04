@@ -2,16 +2,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth-context';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Eye, Trash2, Image as ImageIcon, Video } from 'lucide-react';
+import { Heart, Eye, Trash2, Image as ImageIcon, Share2, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
+import { StatusComments } from '@/components/social/status-comments';
+import { useToast } from '@/hooks/use-toast';
 
 export function StatusFeed() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: statuses = [], isLoading } = useQuery({
     queryKey: ['user-statuses'],
@@ -211,7 +214,7 @@ export function StatusFeed() {
                 size="sm"
                 onClick={() => user && likeMutation.mutate({ statusId: status.id, isLiked: status.isLiked })}
                 disabled={!user || likeMutation.isPending}
-                className={cn(status.isLiked && "text-red-500")}
+                className={cn(status.isLiked && "text-destructive")}
               >
                 <Heart className={cn("h-4 w-4 mr-1", status.isLiked && "fill-current")} />
                 {status.likes_count}
@@ -220,10 +223,26 @@ export function StatusFeed() {
                 <Eye className="h-4 w-4" />
                 {status.views_count}
               </div>
-              <span className="text-xs text-muted-foreground ml-auto">
-                Expires {formatDistanceToNow(new Date(status.expires_at), { addSuffix: true })}
-              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/social?status=${status.id}`);
+                  toast({ title: 'Link copied!', description: 'Share this status with others' });
+                }}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                <Lock className="h-3 w-3" />
+                <span>Encrypted</span>
+                <span className="mx-1">•</span>
+                <span>Expires {formatDistanceToNow(new Date(status.expires_at), { addSuffix: true })}</span>
+              </div>
             </div>
+            
+            {/* Comments Section */}
+            <StatusComments statusId={status.id} commentsCount={status.comments_count ?? 0} />
           </CardContent>
         </Card>
       ))}
