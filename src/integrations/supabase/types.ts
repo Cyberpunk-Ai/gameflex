@@ -582,6 +582,41 @@ export type Database = {
           },
         ]
       }
+      status_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_encrypted: boolean | null
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_encrypted?: boolean | null
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_encrypted?: boolean | null
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_comments_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "user_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       status_likes: {
         Row: {
           created_at: string
@@ -800,6 +835,7 @@ export type Database = {
       }
       user_statuses: {
         Row: {
+          comments_count: number | null
           content: string | null
           created_at: string
           expires_at: string | null
@@ -811,6 +847,7 @@ export type Database = {
           views_count: number | null
         }
         Insert: {
+          comments_count?: number | null
           content?: string | null
           created_at?: string
           expires_at?: string | null
@@ -822,6 +859,7 @@ export type Database = {
           views_count?: number | null
         }
         Update: {
+          comments_count?: number | null
           content?: string | null
           created_at?: string
           expires_at?: string | null
