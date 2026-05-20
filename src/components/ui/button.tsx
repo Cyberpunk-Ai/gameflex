@@ -18,9 +18,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        neon: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(142_76%_45%/0.4)] hover:shadow-[0_0_30px_hsl(142_76%_45%/0.6)] transition-shadow",
-        "neon-outline": "border-2 border-primary bg-transparent text-primary hover:bg-primary/10 shadow-[0_0_15px_hsl(142_76%_45%/0.3)] hover:shadow-[0_0_25px_hsl(142_76%_45%/0.5)]",
-        gaming: "bg-gradient-to-r from-primary to-[hsl(180_100%_50%)] text-primary-foreground font-display uppercase tracking-wider hover:opacity-90 shadow-lg shadow-primary/30",
+        neon: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.45)] hover:shadow-[0_0_36px_hsl(var(--primary)/0.7)] transition-shadow",
+        "neon-outline": "border-2 border-primary/70 bg-transparent text-primary hover:bg-primary/10 shadow-[0_0_18px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.55)]",
+        gaming: "relative bg-gradient-to-r from-[hsl(var(--primary-glow))] via-[hsl(var(--primary))] to-[hsl(var(--accent))] text-primary-foreground font-display uppercase tracking-wider hover:brightness-110 shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6),0_0_40px_-10px_hsl(var(--accent)/0.5)] hover:shadow-[0_10px_40px_-8px_hsl(var(--primary)/0.8),0_0_60px_-10px_hsl(var(--accent)/0.7)] transition-all",
         accent: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25",
       },
       size: {
