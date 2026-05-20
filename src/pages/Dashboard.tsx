@@ -117,10 +117,12 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Card Header */}
-      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border border-primary/20">
+      <div className="relative mb-8 p-6 md:p-8 glass-panel-strong iridescent-border overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-aurora opacity-30 blur-3xl animate-aurora pointer-events-none" />
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="relative group">
-            <Avatar className="h-20 w-20 border-4 border-primary/30">
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary to-accent opacity-60 blur-md group-hover:opacity-100 transition-opacity" />
+            <Avatar className="relative h-20 w-20 border-2 border-white/20">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="text-2xl bg-primary/20 font-bold">
                 {profile?.username?.charAt(0).toUpperCase() ?? 'U'}
@@ -130,7 +132,7 @@ export default function Dashboard() {
           
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-display text-2xl md:text-3xl font-bold">
+              <h1 className="font-display text-3xl md:text-4xl font-bold">
                 {profile?.username ?? 'Gamer'}
               </h1>
               {profile?.is_verified && (
