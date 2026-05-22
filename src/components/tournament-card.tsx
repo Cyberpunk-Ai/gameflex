@@ -102,31 +102,17 @@ export const TournamentCard = forwardRef<HTMLDivElement, TournamentCardProps>(
   return (
     <div
       ref={ref}
-      className={cn(
-        "group relative rounded-2xl overflow-hidden glass-elite holo-border",
-        tournament.status === 'live' && 'rarity-mythic',
-        tournament.status === 'registration_open' && 'rarity-epic',
-      )}
+      className="group relative rounded-xl overflow-hidden surface-card surface-card-hover"
     >
-      {/* Top rarity stripe */}
-      <div className={cn(
-        "absolute top-0 left-0 right-0 h-[3px] z-10",
-        tournament.status === 'live'
-          ? 'bg-gradient-to-r from-pink-500 via-fuchsia-400 to-rose-500'
-          : tournament.status === 'registration_open'
-          ? 'bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400'
-          : 'bg-gradient-to-r from-slate-500/60 to-slate-400/40'
-      )} />
-
       {/* Tournament Image */}
       {tournament.image_url && (
         <div className="h-32 overflow-hidden relative">
           <img 
             src={tournament.image_url} 
             alt={tournament.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
         </div>
       )}
 

@@ -93,17 +93,14 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-elite !rounded-none border-b border-white/5">
-      <nav className="container mx-auto flex items-center justify-between p-4">
+    <header className="fixed top-0 left-0 right-0 z-50 glass">
+      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--primary-glow))] to-[hsl(var(--accent))] shadow-[0_0_24px_hsl(var(--primary)/0.55)] group-hover:shadow-[0_0_36px_hsl(var(--primary)/0.85)] transition-shadow">
-            <Trophy className="h-5 w-5 text-[hsl(240_30%_8%)]" />
-            <span className="absolute inset-0 rounded-xl ring-1 ring-white/30 pointer-events-none" />
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+            <Trophy className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display text-xl font-bold tracking-tight">
-            Game<span className="shimmer-text">Flex</span>
-          </span>
+          <span className="text-base font-semibold tracking-tight">GameFlex</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -147,18 +144,12 @@ export function Header() {
                 </Link>
               </Button>
 
-              {/* Wallet pill */}
-              <Link
-                to="/wallet"
-                className="hidden md:flex items-center gap-2 px-3 h-9 rounded-full glass-panel hover:border-primary/40 transition-colors"
-              >
-                <Wallet className="h-4 w-4 text-accent" />
-                <span className="font-semibold text-sm">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</span>
-              </Link>
-
-              {/* Gold deposit CTA — breaks the purple theme for reward focus */}
-              <Button variant="gold" size="sm" asChild>
-                <Link to="/wallet">+ Deposit</Link>
+              {/* Wallet */}
+              <Button variant="outline" size="sm" className="gap-2 font-mono" asChild>
+                <Link to="/wallet">
+                  <Wallet className="h-4 w-4" />
+                  KES {(profile?.wallet_balance ?? 0).toLocaleString()}
+                </Link>
               </Button>
 
               {/* User Menu */}

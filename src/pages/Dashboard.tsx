@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight, Edit, Phone, Camera, Zap, Sparkles } from 'lucide-react';
+import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight, Edit, Phone, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -124,14 +124,12 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Card Header */}
-      <div className="relative mb-8 p-6 md:p-8 glass-panel-strong iridescent-border overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-aurora opacity-30 blur-3xl animate-aurora pointer-events-none" />
+      <div className="surface-card mb-8 p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="relative group">
-            <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary to-accent opacity-60 blur-md group-hover:opacity-100 transition-opacity" />
-            <Avatar className="relative h-20 w-20 border-2 border-white/20">
+          <div className="relative">
+            <Avatar className="h-16 w-16 border border-border">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
-              <AvatarFallback className="text-2xl bg-primary/20 font-bold">
+              <AvatarFallback className="text-lg bg-secondary font-medium">
                 {profile?.username?.charAt(0).toUpperCase() ?? 'U'}
               </AvatarFallback>
             </Avatar>
@@ -139,20 +137,20 @@ export default function Dashboard() {
           
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-display text-3xl md:text-4xl font-bold">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
                 {profile?.username ?? 'Gamer'}
               </h1>
               {profile?.is_verified && (
-                <Badge variant="secondary" className="bg-green-500/20 text-green-400">Verified</Badge>
+                <Badge variant="secondary" className="text-xs">Verified</Badge>
               )}
             </div>
-            <p className="text-muted-foreground mb-2">
+            <p className="text-sm text-muted-foreground mb-3">
               {(profile as any)?.bio || 'No bio yet - tell others about yourself!'}
             </p>
-            <div className="flex flex-wrap gap-3 text-sm">
+            <div className="flex flex-wrap gap-2 text-xs">
               {profile?.game_handle && (
-                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/50">
-                  <Gamepad2 className="h-3.5 w-3.5" />
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-secondary/40 text-muted-foreground">
+                  <Gamepad2 className="h-3 w-3" />
                   {profile.game_handle}
                 </span>
               )}
@@ -161,18 +159,18 @@ export default function Dashboard() {
                   href={`https://wa.me/${profile.phone.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 transition-colors"
                 >
-                  <Phone className="h-3.5 w-3.5" />
+                  <Phone className="h-3 w-3" />
                   WhatsApp
                 </a>
               )}
             </div>
           </div>
           
-          <Button onClick={() => setShowEditProfile(true)} className="shrink-0">
+          <Button onClick={() => setShowEditProfile(true)} variant="outline" size="sm" className="shrink-0">
             <Edit className="h-4 w-4 mr-2" />
-            Edit Profile
+            Edit profile
           </Button>
         </div>
       </div>
@@ -185,74 +183,32 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {[
-          { icon: Wallet, label: 'Wallet', value: `KES ${(profile?.wallet_balance ?? 0).toLocaleString()}`, color: 'from-violet-500/30 to-indigo-500/10', ring: 'ring-violet-400/40', glow: 'shadow-[0_0_28px_-6px_hsl(252_95%_70%/0.5)]', iconColor: 'text-violet-300' },
-          { icon: Trophy, label: 'Tournaments', value: stats?.tournaments_played ?? 0, color: 'from-amber-400/30 to-yellow-600/10', ring: 'ring-amber-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(45_100%_60%/0.55)]', iconColor: 'text-amber-300' },
-          { icon: TrendingUp, label: `${winRate}% Win Rate`, value: `${stats?.wins ?? 0}W · ${stats?.losses ?? 0}L`, color: 'from-emerald-400/30 to-teal-600/10', ring: 'ring-emerald-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(160_84%_55%/0.5)]', iconColor: 'text-emerald-300' },
-          { icon: Zap, label: 'Points', value: (stats?.points ?? 0).toLocaleString(), color: 'from-cyan-400/30 to-sky-600/10', ring: 'ring-cyan-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(188_95%_60%/0.55)]', iconColor: 'text-cyan-300' },
-          { icon: Star, label: 'Achievements', value: earnedAchievements.length, color: 'from-fuchsia-400/30 to-pink-600/10', ring: 'ring-fuchsia-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(320_95%_65%/0.55)]', iconColor: 'text-fuchsia-300' },
+          { icon: Wallet, label: 'Wallet', value: `KES ${(profile?.wallet_balance ?? 0).toLocaleString()}` },
+          { icon: Trophy, label: 'Tournaments', value: stats?.tournaments_played ?? 0 },
+          { icon: TrendingUp, label: `${winRate}% win rate`, value: `${stats?.wins ?? 0}W · ${stats?.losses ?? 0}L` },
+          { icon: Zap, label: 'Points', value: (stats?.points ?? 0).toLocaleString() },
+          { icon: Star, label: 'Achievements', value: earnedAchievements.length },
         ].map((s) => (
-          <div key={s.label} className={cn('group relative rounded-2xl glass-elite p-4 md:p-5 overflow-hidden ring-1', s.ring, s.glow)}>
-            <div className={cn('absolute -top-12 -right-12 h-32 w-32 rounded-full blur-2xl opacity-50 bg-gradient-to-br', s.color)} />
-            <s.icon className={cn('relative h-6 w-6 md:h-7 md:w-7 mb-3 drop-shadow-[0_0_12px_currentColor]', s.iconColor)} />
-            <div className="relative font-display text-xl md:text-2xl font-bold tracking-tight">{s.value}</div>
-            <div className="relative text-[11px] md:text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
+          <div key={s.label} className="surface-card p-4 md:p-5">
+            <div className="flex items-center justify-between mb-2.5">
+              <s.icon className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="text-xl md:text-2xl font-semibold tracking-tight">{s.value}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Energy Core — cinematic centerpiece */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2 glass-elite holo-border p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-aurora opacity-10 animate-aurora pointer-events-none" />
-          <div className="relative grid md:grid-cols-[1fr_auto] gap-6 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel mb-4 text-xs uppercase tracking-widest">
-                <Sparkles className="h-3.5 w-3.5 text-accent" /> Progression Core
-              </div>
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="font-display text-5xl md:text-6xl font-bold shimmer-text">LVL {level}</span>
-                <span className="text-sm text-muted-foreground">{xpInLevel} / 1000 XP</span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-5 max-w-md">
-                Charge your reactor. Win matches, claim achievements, and ascend the ranks of the elite gaming network.
-              </p>
-              <div className="energy-bar mb-2"><span style={{ width: `${xpPct}%` }} /></div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Current tier · LVL {level}</span>
-                <span className="text-primary-glow">Next · LVL {level + 1}</span>
-              </div>
-            </div>
-            <div className="energy-core w-48 h-48 md:w-56 md:h-56 mx-auto">
-              <div className="ring" />
-              <div className="ring r2" />
-              <div className="ring r3" />
-              <div className="core-glow" />
-              <div className="orbit"><i /></div>
-              <div className="orbit o2"><i /></div>
-              <div className="orbit o3"><i /></div>
-            </div>
+      {/* Level progress */}
+      <div className="surface-card p-6 mb-8">
+        <div className="flex items-baseline justify-between mb-3">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Level</div>
+            <div className="text-2xl font-semibold tracking-tight">Level {level}</div>
           </div>
+          <div className="font-mono text-sm text-muted-foreground">{xpInLevel} / 1000 XP</div>
         </div>
-
-        {/* Tier rarity strip */}
-        <div className="glass-elite p-6 relative overflow-hidden">
-          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl bg-gradient-to-br from-fuchsia-500/40 to-violet-500/20" />
-          <h3 className="relative font-display font-bold text-lg mb-4">Rarity Vault</h3>
-          <div className="relative space-y-3">
-            {[
-              { name: 'Common',    cls: 'border-slate-400/30 text-slate-300' },
-              { name: 'Rare',      cls: 'border-cyan-400/40 text-cyan-300 rarity-rare' },
-              { name: 'Epic',      cls: 'border-violet-400/40 text-violet-300 rarity-epic' },
-              { name: 'Legendary', cls: 'border-amber-400/40 text-amber-300 rarity-legendary' },
-              { name: 'Mythic',    cls: 'border-pink-400/40 text-pink-300 rarity-mythic' },
-            ].map((r) => (
-              <div key={r.name} className={cn('flex items-center justify-between px-3 py-2 rounded-xl border bg-black/20', r.cls)}>
-                <span className="text-sm font-semibold tracking-wide">{r.name}</span>
-                <span className="text-xs uppercase opacity-70">tier</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="energy-bar"><span style={{ width: `${xpPct}%` }} /></div>
       </div>
 
       {/* Upcoming Matches Alert */}
