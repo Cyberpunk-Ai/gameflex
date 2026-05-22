@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight, Edit, Phone, Camera } from 'lucide-react';
+import { Wallet, Trophy, TrendingUp, Gamepad2, Star, ArrowRight, Edit, Phone, Camera, Zap, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,6 +12,7 @@ import { ReferralCard } from '@/components/referral-card';
 import { AchievementsDisplay } from '@/components/achievements-display';
 import { ActivityFeed } from '@/components/activity-feed';
 import { EditProfileModal } from '@/components/profile/edit-profile-modal';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
   const { user, profile, isAuthenticated } = useAuth();
@@ -114,6 +115,12 @@ export default function Dashboard() {
     ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100) 
     : 0;
 
+  // XP / level model (visual only — derived from points)
+  const points = stats?.points ?? 0;
+  const level = Math.max(1, Math.floor(points / 1000) + 1);
+  const xpInLevel = points % 1000;
+  const xpPct = Math.min(100, (xpInLevel / 1000) * 100);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Card Header */}
@@ -177,30 +184,74 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 p-4 md:p-6">
-          <Wallet className="h-6 md:h-8 w-6 md:w-8 text-primary mb-2 md:mb-3" />
-          <div className="font-display text-xl md:text-2xl font-bold">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</div>
-          <div className="text-xs md:text-sm text-muted-foreground">Wallet Balance</div>
+        {[
+          { icon: Wallet, label: 'Wallet', value: `KES ${(profile?.wallet_balance ?? 0).toLocaleString()}`, color: 'from-violet-500/30 to-indigo-500/10', ring: 'ring-violet-400/40', glow: 'shadow-[0_0_28px_-6px_hsl(252_95%_70%/0.5)]', iconColor: 'text-violet-300' },
+          { icon: Trophy, label: 'Tournaments', value: stats?.tournaments_played ?? 0, color: 'from-amber-400/30 to-yellow-600/10', ring: 'ring-amber-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(45_100%_60%/0.55)]', iconColor: 'text-amber-300' },
+          { icon: TrendingUp, label: `${winRate}% Win Rate`, value: `${stats?.wins ?? 0}W · ${stats?.losses ?? 0}L`, color: 'from-emerald-400/30 to-teal-600/10', ring: 'ring-emerald-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(160_84%_55%/0.5)]', iconColor: 'text-emerald-300' },
+          { icon: Zap, label: 'Points', value: (stats?.points ?? 0).toLocaleString(), color: 'from-cyan-400/30 to-sky-600/10', ring: 'ring-cyan-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(188_95%_60%/0.55)]', iconColor: 'text-cyan-300' },
+          { icon: Star, label: 'Achievements', value: earnedAchievements.length, color: 'from-fuchsia-400/30 to-pink-600/10', ring: 'ring-fuchsia-300/40', glow: 'shadow-[0_0_28px_-6px_hsl(320_95%_65%/0.55)]', iconColor: 'text-fuchsia-300' },
+        ].map((s) => (
+          <div key={s.label} className={cn('group relative rounded-2xl glass-elite p-4 md:p-5 overflow-hidden ring-1', s.ring, s.glow)}>
+            <div className={cn('absolute -top-12 -right-12 h-32 w-32 rounded-full blur-2xl opacity-50 bg-gradient-to-br', s.color)} />
+            <s.icon className={cn('relative h-6 w-6 md:h-7 md:w-7 mb-3 drop-shadow-[0_0_12px_currentColor]', s.iconColor)} />
+            <div className="relative font-display text-xl md:text-2xl font-bold tracking-tight">{s.value}</div>
+            <div className="relative text-[11px] md:text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Energy Core — cinematic centerpiece */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 glass-elite holo-border p-6 md:p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-aurora opacity-10 animate-aurora pointer-events-none" />
+          <div className="relative grid md:grid-cols-[1fr_auto] gap-6 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel mb-4 text-xs uppercase tracking-widest">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Progression Core
+              </div>
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="font-display text-5xl md:text-6xl font-bold shimmer-text">LVL {level}</span>
+                <span className="text-sm text-muted-foreground">{xpInLevel} / 1000 XP</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-5 max-w-md">
+                Charge your reactor. Win matches, claim achievements, and ascend the ranks of the elite gaming network.
+              </p>
+              <div className="energy-bar mb-2"><span style={{ width: `${xpPct}%` }} /></div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Current tier · LVL {level}</span>
+                <span className="text-primary-glow">Next · LVL {level + 1}</span>
+              </div>
+            </div>
+            <div className="energy-core w-48 h-48 md:w-56 md:h-56 mx-auto">
+              <div className="ring" />
+              <div className="ring r2" />
+              <div className="ring r3" />
+              <div className="core-glow" />
+              <div className="orbit"><i /></div>
+              <div className="orbit o2"><i /></div>
+              <div className="orbit o3"><i /></div>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/30 p-4 md:p-6">
-          <Trophy className="h-6 md:h-8 w-6 md:w-8 text-yellow-500 mb-2 md:mb-3" />
-          <div className="font-display text-xl md:text-2xl font-bold">{stats?.tournaments_played ?? 0}</div>
-          <div className="text-xs md:text-sm text-muted-foreground">Tournaments</div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 p-4 md:p-6">
-          <TrendingUp className="h-6 md:h-8 w-6 md:w-8 text-green-500 mb-2 md:mb-3" />
-          <div className="font-display text-xl md:text-2xl font-bold">{stats?.wins ?? 0}W - {stats?.losses ?? 0}L</div>
-          <div className="text-xs md:text-sm text-muted-foreground">{winRate}% Win Rate</div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 p-4 md:p-6">
-          <Gamepad2 className="h-6 md:h-8 w-6 md:w-8 text-accent mb-2 md:mb-3" />
-          <div className="font-display text-xl md:text-2xl font-bold">{stats?.points ?? 0}</div>
-          <div className="text-xs md:text-sm text-muted-foreground">Points</div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-500/5 border border-orange-500/30 p-4 md:p-6">
-          <Star className="h-6 md:h-8 w-6 md:w-8 text-orange-500 mb-2 md:mb-3" />
-          <div className="font-display text-xl md:text-2xl font-bold">{earnedAchievements.length}</div>
-          <div className="text-xs md:text-sm text-muted-foreground">Achievements</div>
+
+        {/* Tier rarity strip */}
+        <div className="glass-elite p-6 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl bg-gradient-to-br from-fuchsia-500/40 to-violet-500/20" />
+          <h3 className="relative font-display font-bold text-lg mb-4">Rarity Vault</h3>
+          <div className="relative space-y-3">
+            {[
+              { name: 'Common',    cls: 'border-slate-400/30 text-slate-300' },
+              { name: 'Rare',      cls: 'border-cyan-400/40 text-cyan-300 rarity-rare' },
+              { name: 'Epic',      cls: 'border-violet-400/40 text-violet-300 rarity-epic' },
+              { name: 'Legendary', cls: 'border-amber-400/40 text-amber-300 rarity-legendary' },
+              { name: 'Mythic',    cls: 'border-pink-400/40 text-pink-300 rarity-mythic' },
+            ].map((r) => (
+              <div key={r.name} className={cn('flex items-center justify-between px-3 py-2 rounded-xl border bg-black/20', r.cls)}>
+                <span className="text-sm font-semibold tracking-wide">{r.name}</span>
+                <span className="text-xs uppercase opacity-70">tier</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -65,6 +65,19 @@
     --shadow-glow: 0 0 80px hsl(var(--primary) / 0.35);
     --shadow-3d: 0 30px 60px -25px hsl(244 90% 4% / 0.8), 0 18px 36px -18px hsl(244 80% 8% / 0.5);
 
+    /* Premium CTA token — breaks the purple theme for reward focus */
+    --cta-gold: 45 100% 60%;
+    --cta-gold-glow: 38 100% 65%;
+    --gradient-gold: linear-gradient(135deg, hsl(48 100% 68%) 0%, hsl(38 100% 55%) 55%, hsl(28 100% 50%) 100%);
+    --shadow-gold: 0 10px 30px -8px hsl(38 100% 50% / 0.55), 0 0 40px -8px hsl(48 100% 65% / 0.55);
+
+    /* Rarity tiers (NFT-style) */
+    --rarity-common: 220 15% 65%;
+    --rarity-rare: 200 95% 65%;
+    --rarity-epic: 270 95% 72%;
+    --rarity-legendary: 38 100% 60%;
+    --rarity-mythic: 320 95% 68%;
+
     --sidebar-background: 240 28% 7%;
     --sidebar-foreground: 220 40% 98%;
     --sidebar-primary: 244 92% 72%;
@@ -136,6 +149,127 @@
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow: var(--shadow-3d);
+  }
+
+  /* Cinematic elite glass — smoked dark with inner highlight and ambient ring */
+  .glass-elite {
+    @apply relative rounded-2xl;
+    background:
+      radial-gradient(120% 100% at 0% 0%, hsl(252 60% 24% / 0.35) 0%, transparent 55%),
+      radial-gradient(120% 100% at 100% 100%, hsl(188 70% 30% / 0.22) 0%, transparent 55%),
+      linear-gradient(160deg, hsl(244 40% 12% / 0.72), hsl(240 40% 5% / 0.82));
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.08),
+      inset 0 -1px 0 hsl(244 95% 75% / 0.06),
+      0 30px 70px -28px hsl(244 95% 6% / 0.85),
+      0 0 0 1px hsl(244 80% 50% / 0.05);
+    transition: transform 0.5s cubic-bezier(.2,.8,.2,1), box-shadow 0.5s;
+  }
+  .glass-elite:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.12),
+      0 40px 80px -28px hsl(244 95% 6% / 0.9),
+      0 0 40px -10px hsl(var(--primary) / 0.4),
+      0 0 80px -20px hsl(var(--accent) / 0.3);
+  }
+
+  /* Animated holographic border — for premium cards */
+  .holo-border { position: relative; isolation: isolate; }
+  .holo-border::before {
+    content: '';
+    position: absolute; inset: 0;
+    padding: 1.5px; border-radius: inherit;
+    background: conic-gradient(from var(--holo-angle, 0deg),
+      hsl(252 95% 78% / .8),
+      hsl(188 95% 68% / .8),
+      hsl(320 95% 72% / .8),
+      hsl(252 95% 78% / .8));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+    animation: holo-rotate 6s linear infinite;
+    opacity: .55;
+  }
+  .holo-border:hover::before { opacity: 1; }
+
+  /* Glowing energy progress bar */
+  .energy-bar {
+    @apply relative h-2.5 w-full overflow-hidden rounded-full;
+    background: hsl(240 30% 12%);
+    box-shadow: inset 0 1px 2px hsl(240 50% 2% / .6);
+  }
+  .energy-bar > span {
+    @apply block h-full rounded-full relative;
+    background: linear-gradient(90deg, hsl(252 95% 78%), hsl(244 92% 72%), hsl(188 95% 68%));
+    box-shadow: 0 0 14px hsl(244 92% 72% / .8), 0 0 28px hsl(188 95% 68% / .5);
+  }
+  .energy-bar > span::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / .45), transparent);
+    transform: translateX(-100%);
+    animation: energy-flow 2.4s ease-in-out infinite;
+  }
+
+  /* Rarity glow utilities */
+  .rarity-rare      { box-shadow: 0 0 22px hsl(var(--rarity-rare)/.45), inset 0 0 0 1px hsl(var(--rarity-rare)/.35); }
+  .rarity-epic      { box-shadow: 0 0 26px hsl(var(--rarity-epic)/.5),  inset 0 0 0 1px hsl(var(--rarity-epic)/.4); }
+  .rarity-legendary { box-shadow: 0 0 30px hsl(var(--rarity-legendary)/.55), inset 0 0 0 1px hsl(var(--rarity-legendary)/.45); }
+  .rarity-mythic    { box-shadow: 0 0 32px hsl(var(--rarity-mythic)/.55), inset 0 0 0 1px hsl(var(--rarity-mythic)/.45); }
+
+  /* Cinematic atmosphere — fixed background layer mounted in Layout */
+  .atmosphere {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  .atmosphere::before, .atmosphere::after {
+    content: ''; position: absolute; border-radius: 9999px; filter: blur(120px); opacity: .35;
+  }
+  .atmosphere::before {
+    width: 60vmax; height: 60vmax; top: -20vmax; left: -10vmax;
+    background: radial-gradient(circle, hsl(252 95% 60% / .55), transparent 60%);
+    animation: drift1 22s ease-in-out infinite alternate;
+  }
+  .atmosphere::after {
+    width: 55vmax; height: 55vmax; bottom: -15vmax; right: -10vmax;
+    background: radial-gradient(circle, hsl(188 95% 55% / .45), transparent 60%);
+    animation: drift2 26s ease-in-out infinite alternate;
+  }
+
+  /* Energy core centerpiece — sci-fi reactor */
+  .energy-core { position: relative; aspect-ratio: 1 / 1; }
+  .energy-core .ring {
+    position: absolute; inset: 0; border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / .4);
+    box-shadow: 0 0 30px hsl(var(--primary) / .35), inset 0 0 30px hsl(var(--primary) / .25);
+  }
+  .energy-core .ring.r2 { inset: 12%; border-color: hsl(var(--accent) / .45); box-shadow: 0 0 24px hsl(var(--accent) / .35), inset 0 0 24px hsl(var(--accent) / .25); animation: spin-rev 14s linear infinite; }
+  .energy-core .ring.r3 { inset: 24%; border-color: hsl(var(--neon-pink) / .5); box-shadow: 0 0 22px hsl(var(--neon-pink) / .4), inset 0 0 22px hsl(var(--neon-pink) / .25); animation: spin-fwd 9s linear infinite; }
+  .energy-core .core-glow {
+    position: absolute; inset: 30%; border-radius: 9999px;
+    background: radial-gradient(circle, hsl(var(--primary-glow)) 0%, hsl(var(--primary)) 40%, transparent 70%);
+    filter: blur(8px); animation: pulse-core 3s ease-in-out infinite;
+  }
+  .energy-core .orbit {
+    position: absolute; inset: 0; animation: spin-fwd 18s linear infinite;
+  }
+  .energy-core .orbit > i {
+    position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px; border-radius: 9999px;
+    background: hsl(var(--accent)); box-shadow: 0 0 14px hsl(var(--accent)), 0 0 28px hsl(var(--accent) / .6);
+  }
+  .energy-core .orbit.o2 { animation-duration: 24s; animation-direction: reverse; }
+  .energy-core .orbit.o2 > i { background: hsl(var(--neon-pink)); box-shadow: 0 0 14px hsl(var(--neon-pink)), 0 0 28px hsl(var(--neon-pink) / .6); }
+  .energy-core .orbit.o3 { animation-duration: 30s; }
+  .energy-core .orbit.o3 > i { background: hsl(var(--primary-glow)); }
+
+  /* Active nav indicator — neon underline glow */
+  .nav-active {
+    background: linear-gradient(180deg, hsl(var(--primary)/.18), hsl(var(--primary)/.05));
+    box-shadow: inset 0 -2px 0 hsl(var(--primary)), 0 0 18px -4px hsl(var(--primary)/.6);
+    color: hsl(var(--primary-foreground));
   }
 
   .iridescent-border {
@@ -219,6 +353,7 @@
   .animate-slide-up { animation: slide-up 0.5s ease-out; }
   .animate-fade-in { animation: fade-in 0.5s ease-out; }
   .animate-aurora { animation: aurora 18s linear infinite; }
+  .animate-spin-slow { animation: spin-fwd 18s linear infinite; }
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -251,6 +386,26 @@
 @keyframes aurora {
   0% { transform: rotate(0deg) scale(1.1); }
   100% { transform: rotate(360deg) scale(1.1); }
+}
+@keyframes holo-rotate { to { --holo-angle: 360deg; } }
+@property --holo-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes energy-flow {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(110%); }
+}
+@keyframes drift1 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(8vmax, 6vmax); }
+}
+@keyframes drift2 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-6vmax, -8vmax); }
+}
+@keyframes spin-fwd { to { transform: rotate(360deg); } }
+@keyframes spin-rev { to { transform: rotate(-360deg); } }
+@keyframes pulse-core {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50%      { transform: scale(1.12); opacity: 1; }
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }

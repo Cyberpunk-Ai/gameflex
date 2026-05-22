@@ -93,15 +93,16 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-elite !rounded-none border-b border-white/5">
       <nav className="container mx-auto flex items-center justify-between p-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-            <Trophy className="h-6 w-6 text-primary-foreground" />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--primary-glow))] to-[hsl(var(--accent))] shadow-[0_0_24px_hsl(var(--primary)/0.55)] group-hover:shadow-[0_0_36px_hsl(var(--primary)/0.85)] transition-shadow">
+            <Trophy className="h-5 w-5 text-[hsl(240_30%_8%)]" />
+            <span className="absolute inset-0 rounded-xl ring-1 ring-white/30 pointer-events-none" />
           </div>
           <span className="font-display text-xl font-bold tracking-tight">
-            Game<span className="text-primary">Flex</span>
+            Game<span className="shimmer-text">Flex</span>
           </span>
         </Link>
 
@@ -112,10 +113,10 @@ export function Header() {
               key={item.name}
               to={item.href}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                "relative px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 isActive(item.href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  ? "nav-active text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
               )}
             >
               {item.name}
@@ -146,12 +147,18 @@ export function Header() {
                 </Link>
               </Button>
 
-              {/* Wallet */}
-              <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link to="/wallet">
-                  <Wallet className="h-4 w-4" />
-                  <span className="font-semibold">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</span>
-                </Link>
+              {/* Wallet pill */}
+              <Link
+                to="/wallet"
+                className="hidden md:flex items-center gap-2 px-3 h-9 rounded-full glass-panel hover:border-primary/40 transition-colors"
+              >
+                <Wallet className="h-4 w-4 text-accent" />
+                <span className="font-semibold text-sm">KES {(profile?.wallet_balance ?? 0).toLocaleString()}</span>
+              </Link>
+
+              {/* Gold deposit CTA — breaks the purple theme for reward focus */}
+              <Button variant="gold" size="sm" asChild>
+                <Link to="/wallet">+ Deposit</Link>
               </Button>
 
               {/* User Menu */}

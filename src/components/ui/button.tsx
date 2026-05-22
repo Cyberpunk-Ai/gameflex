@@ -22,6 +22,7 @@ const buttonVariants = cva(
         "neon-outline": "border-2 border-primary/70 bg-transparent text-primary hover:bg-primary/10 shadow-[0_0_18px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.55)]",
         gaming: "relative bg-gradient-to-r from-[hsl(var(--primary-glow))] via-[hsl(var(--primary))] to-[hsl(var(--accent))] text-primary-foreground font-display uppercase tracking-wider hover:brightness-110 shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6),0_0_40px_-10px_hsl(var(--accent)/0.5)] hover:shadow-[0_10px_40px_-8px_hsl(var(--primary)/0.8),0_0_60px_-10px_hsl(var(--accent)/0.7)] transition-all",
         accent: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/25",
+        gold: "relative bg-[image:var(--gradient-gold)] text-[hsl(28_70%_15%)] font-bold uppercase tracking-wider shadow-[var(--shadow-gold)] hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all border border-[hsl(48_100%_70%/0.6)]",
       },
       size: {
         default: "h-10 px-4 py-2",
