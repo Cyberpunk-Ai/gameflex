@@ -12,6 +12,7 @@ import { ReferralCard } from '@/components/referral-card';
 import { AchievementsDisplay } from '@/components/achievements-display';
 import { ActivityFeed } from '@/components/activity-feed';
 import { EditProfileModal } from '@/components/profile/edit-profile-modal';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
   const { user, profile, isAuthenticated } = useAuth();
