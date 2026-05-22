@@ -1,14 +1,11 @@
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Zap, Shield, ArrowRight, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TournamentCard } from '@/components/tournament-card';
-import { TiltCard } from '@/components/ui/tilt-card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-const HeroScene = lazy(() => import('@/components/three/hero-scene').then(m => ({ default: m.HeroScene })));
 
 const features = [
   { icon: Trophy, title: 'Win Big Prizes', description: 'Compete for cash prizes up to KES 100,000+' },
@@ -93,62 +90,48 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-24 lg:py-36 overflow-hidden">
-        {/* 3D scene */}
-        <div className="absolute inset-0">
-          <Suspense fallback={null}>
-            <HeroScene />
-          </Suspense>
-        </div>
-        {/* Grid + aurora overlays */}
+      <section className="relative py-24 lg:py-32 overflow-hidden border-b border-border">
         <div className="absolute inset-0 grid-fade pointer-events-none" />
-        <div className="absolute -top-1/2 left-1/2 -translate-x-1/2 w-[900px] h-[900px] bg-gradient-aurora opacity-30 blur-3xl animate-aurora pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background pointer-events-none" />
-
-        <div className="container mx-auto px-4 relative z-10 pointer-events-none">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-3xl mx-auto text-center">
             {liveTournaments.length > 0 && (
-              <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full glass-panel pointer-events-auto">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" />
-                </span>
-                <span className="text-xs font-semibold tracking-wider uppercase text-foreground/90">
+              <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-border bg-secondary/40 text-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-muted-foreground">
                   {liveTournaments.length} Tournament{liveTournaments.length > 1 ? 's' : ''} Live Now
                 </span>
               </div>
             )}
 
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] tracking-tight">
-              Compete. Win.<br/>
-              <span className="shimmer-text">Earn.</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-[1.05] tracking-tight">
+              Compete. Win. <span className="text-muted-foreground">Earn.</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
               Kenya's premier gaming tournament platform. Join thousands of gamers competing for real cash prizes with M-Pesa payments.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pointer-events-auto">
-              <Button size="xl" variant="gaming" asChild>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button size="lg" asChild>
                 <Link to="/tournaments">
                   Browse Tournaments
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="xl" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild>
                 <Link to="/register">Create Account</Link>
               </Button>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 md:gap-4 mt-16 max-w-2xl mx-auto pointer-events-auto">
+            <div className="grid grid-cols-3 gap-px mt-16 max-w-2xl mx-auto border border-border rounded-xl overflow-hidden bg-card">
               {[
                 { v: '1.5K+', l: 'Players' },
                 { v: 'KES 2.4M', l: 'Paid Out' },
                 { v: '48', l: 'Tournaments' },
               ].map((s) => (
-                <div key={s.l} className="glass-panel p-4 md:p-5">
-                  <div className="font-display text-2xl md:text-3xl font-bold text-gradient">{s.v}</div>
+                <div key={s.l} className="bg-card p-5">
+                  <div className="text-2xl md:text-3xl font-semibold tracking-tight">{s.v}</div>
                   <div className="text-xs md:text-sm text-muted-foreground mt-1">{s.l}</div>
                 </div>
               ))}
@@ -158,104 +141,90 @@ export default function Home() {
       </section>
 
       {/* Featured Games */}
-      <section className="py-20 border-t border-white/5 relative">
+      <section className="py-20 border-b border-border">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-2">Popular <span className="text-gradient">Games</span></h2>
-          <p className="text-center text-muted-foreground mb-10">Pick your arena</p>
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">Popular games</h2>
+          <p className="text-muted-foreground mb-8">Pick your arena</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {games.map((game) => (
-              <TiltCard key={game.name} intensity={10} className="rounded-2xl">
-                <Link
-                  to={`/tournaments?game=${game.name.toLowerCase().replace(' ', '')}`}
-                  className="block glass-panel iridescent-border p-5 text-center group hover:scale-[1.02] transition-transform"
-                >
-                  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform drop-shadow-[0_0_12px_hsl(244_92%_72%/0.5)]">
-                    {game.icon}
-                  </div>
-                  <div className="font-semibold text-sm">{game.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{game.players} players</div>
-                </Link>
-              </TiltCard>
+              <Link
+                key={game.name}
+                to={`/tournaments?game=${game.name.toLowerCase().replace(' ', '')}`}
+                className="surface-card surface-card-hover p-5 text-center"
+              >
+                <div className="text-4xl mb-3">{game.icon}</div>
+                <div className="font-medium text-sm">{game.name}</div>
+                <div className="text-xs text-muted-foreground mt-1">{game.players} players</div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* Featured Tournaments */}
-      <section className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.03] to-transparent pointer-events-none" />
+      <section className="py-20 border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">Featured <span className="text-gradient">Tournaments</span></h2>
-              <p className="text-muted-foreground mt-2">Join the action — prize pools climbing</p>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Featured tournaments</h2>
+              <p className="text-muted-foreground mt-1 text-sm">Join the action — prize pools climbing</p>
             </div>
             <Button variant="ghost" asChild>
-              <Link to="/tournaments">View All <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Link to="/tournaments">View all <ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingTournaments.map((tournament) => (
-              <TiltCard key={tournament.id} intensity={6} className="rounded-2xl">
-                <TournamentCard tournament={tournament} />
-              </TiltCard>
+              <TournamentCard key={tournament.id} tournament={tournament} />
             ))}
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-20">
+      <section className="py-20 border-b border-border">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3">Why <span className="text-gradient">GameFlex</span>?</h2>
-          <p className="text-center text-muted-foreground mb-12">Built for serious competitors</p>
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">Why GameFlex</h2>
+          <p className="text-muted-foreground mb-10">Built for serious competitors</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
-              <TiltCard key={feature.title} intensity={8} className="rounded-2xl">
-                <div className="glass-panel p-6 text-center h-full group">
-                  <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <div className="absolute inset-0 rounded-2xl blur-md bg-primary/30 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    <feature.icon className="relative h-7 w-7 text-primary-foreground drop-shadow" />
-                  </div>
-                  <h3 className="font-display font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+              <div key={feature.title} className="surface-card p-6">
+                <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center mb-4">
+                  <feature.icon className="h-4 w-4 text-foreground" />
                 </div>
-              </TiltCard>
+                <h3 className="font-medium mb-1.5">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Top Players */}
-      <section className="py-20 relative">
+      <section className="py-20 border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">Top <span className="text-gradient">Players</span></h2>
-              <p className="text-muted-foreground mt-2">This week's elite</p>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Top players</h2>
+              <p className="text-muted-foreground mt-1 text-sm">This week's leaders</p>
             </div>
             <Button variant="ghost" asChild>
-              <Link to="/leaderboard">Full Leaderboard <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Link to="/leaderboard">Full leaderboard <ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
           </div>
-          <div className="grid gap-3">
+          <div className="surface-card divide-y divide-border overflow-hidden">
             {topPlayers.map((player: any, index: number) => (
-              <div key={player.id} className="flex items-center gap-4 p-4 glass-panel hover:border-primary/30 transition-colors">
-                <div className={`h-11 w-11 rounded-xl flex items-center justify-center font-display font-bold text-lg ${
-                  index === 0 ? 'bg-gradient-to-br from-yellow-400/30 to-yellow-600/20 text-yellow-300 shadow-[0_0_20px_hsl(45_100%_60%/0.4)]' :
-                  index === 1 ? 'bg-gradient-to-br from-slate-300/30 to-slate-500/20 text-slate-200' :
-                  index === 2 ? 'bg-gradient-to-br from-orange-400/30 to-orange-600/20 text-orange-300' :
-                  'bg-secondary/50 text-muted-foreground'
-                }`}>
+              <div key={player.id} className="flex items-center gap-4 p-4 hover:bg-secondary/40 transition-colors">
+                <div className="h-9 w-9 rounded-md flex items-center justify-center font-mono text-sm bg-secondary text-muted-foreground">
                   {index + 1}
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold">{player.profiles?.username ?? 'Unknown'}</div>
-                  <div className="text-sm text-muted-foreground">{player.profiles?.game_handle ?? '-'}</div>
+                  <div className="font-medium text-sm">{player.profiles?.username ?? 'Unknown'}</div>
+                  <div className="text-xs text-muted-foreground">{player.profiles?.game_handle ?? '-'}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display font-bold text-gradient">{(player.points ?? 0).toLocaleString()} pts</div>
-                  <div className="text-sm text-muted-foreground">{player.wins ?? 0}W - {player.losses ?? 0}L</div>
+                  <div className="font-mono text-sm font-medium">{(player.points ?? 0).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">{player.wins ?? 0}W · {player.losses ?? 0}L</div>
                 </div>
               </div>
             ))}
@@ -264,17 +233,13 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 relative overflow-hidden">
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="relative max-w-4xl mx-auto text-center p-12 md:p-16 rounded-3xl glass-panel-strong iridescent-border overflow-hidden">
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-aurora opacity-40 blur-3xl animate-aurora pointer-events-none" />
-            <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-aurora opacity-30 blur-3xl animate-aurora pointer-events-none" style={{ animationDirection: 'reverse' }} />
-            <h2 className="relative font-display text-4xl md:text-5xl font-bold mb-4">
-              Ready to <span className="shimmer-text">Compete</span>?
-            </h2>
-            <p className="relative text-muted-foreground mb-8 text-lg">Join thousands of gamers and start winning today.</p>
-            <Button size="xl" variant="gaming" asChild>
-              <Link to="/register">Get Started Free</Link>
+          <div className="max-w-3xl mx-auto text-center surface-card p-10 md:p-14">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Ready to compete?</h2>
+            <p className="text-muted-foreground mb-7">Join thousands of gamers and start winning today.</p>
+            <Button size="lg" asChild>
+              <Link to="/register">Get started free</Link>
             </Button>
           </div>
         </div>
